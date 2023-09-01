@@ -37,7 +37,7 @@ class ManipulateDictionary:
                             valueSeach = v1
 
             if valueSeach == '' and versionSeach == -1:
-                return None, None
+                return None, -1
             else:
                 return valueSeach, versionSeach
         else:
@@ -49,9 +49,19 @@ class ManipulateDictionary:
                             valueSeach = v1
 
         if valueSeach == '' and versionSeach == -1:
-            return None, None
+            return None, -1
         else:
             return valueSeach, versionSeach
+
+    # Remove todos os valores associados à chave, exceto a versão mais recente, e retorna valor e versão para a chave
+    def trim(self, key: str):
+        if key in self.__dictionary:
+            last_value, last_version = self.getByKeyVersion(key)
+
+            self.__dictionary[key].clear()
+            self.__dictionary[key].append((last_version, last_value))
+
+            return key, last_value, last_version
 
     def returnDictionary(self):
         return self.__dictionary
@@ -60,12 +70,18 @@ class ManipulateDictionary:
 if __name__ == '__main__':
     diconario = ManipulateDictionary()
 
-    for i in range(10):
+    for i in range(3):
         print(diconario.insertAndUpdate('A', f'Rafael'))
         sleep(.5)
 
     # new_time = float(input(''))
     print(diconario.getByKeyVersion('A'))
+    print(diconario.trim('A'))
+    print(diconario.returnDictionary())
+    #
+    # for i in range(2):
+    #     print(diconario.insertAndUpdate('A', f'Rafael'))
+    # print(diconario.returnDictionary())
 
     # for k, v in diconario.returnDictionary().items():
     #     # for v0, v1 in v:

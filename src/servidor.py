@@ -96,7 +96,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
     def Trim(self, request, context):
         key = request.key
-        version = request.ver
 
         response = interface_pb2.KeyValueVersionReply(
             key='Rafael',
