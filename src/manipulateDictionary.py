@@ -7,11 +7,19 @@ class ManipulateDictionary:
     def __init__(self):
         self.__dictionary = dict()
 
-    def insert(self, key: str, value: str):
+    def insertAndUpdate(self, key: str, value: str) -> (str, str, int, int):
+        # Retorno é dado por chave, valor, versão antiga se houver e a nova versão
+        new_version = time()
+
         if key in self.__dictionary:
-            self.__dictionary[key].append((time(), value))
+            # Busca a versão antiga
+            old_version = self.__dictionary[key][0][0]
+
+            self.__dictionary[key].append((new_version, value))
+            return key, value, old_version, new_version
         else:
-            self.__dictionary[key] = [(time(), value)]
+            self.__dictionary[key] = [(new_version, value)]
+            return key, value, -1, new_version
 
     def getByKeyVersion(self, key, version=-1.0):
         valueSeach = ''
@@ -51,19 +59,10 @@ class ManipulateDictionary:
 
 if __name__ == '__main__':
     diconario = ManipulateDictionary()
-    diconario.insert('A', 'Rafael')
-    sleep(2)
-    diconario.insert('A', 'Rafael2')
-    sleep(2)
-    diconario.insert('A', 'Rafael2')
-    sleep(2)
-    diconario.insert('A', 'Rafael2')
-    sleep(2)
-    diconario.insert('A', 'Rafael2')
-    sleep(2)
-    diconario.insert('A', 'Rafael2')
-    sleep(2)
-    diconario.insert('A', 'Rafael10')
+
+    for i in range(2):
+        print(diconario.insertAndUpdate('A', f'Rafael'))
+        sleep(2)
 
     for k, v in diconario.returnDictionary().items():
         # for v0, v1 in v:
