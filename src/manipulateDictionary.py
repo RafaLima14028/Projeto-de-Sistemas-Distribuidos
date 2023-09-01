@@ -13,7 +13,8 @@ class ManipulateDictionary:
 
         if key in self.__dictionary:
             # Busca a versão antiga
-            old_version = self.__dictionary[key][0][0]
+            # old_version = self.__dictionary[key][0][0]
+            old_version = self.getByKeyVersion(key)[1]
 
             self.__dictionary[key].append((new_version, value))
             return key, value, old_version, new_version
@@ -21,14 +22,14 @@ class ManipulateDictionary:
             self.__dictionary[key] = [(new_version, value)]
             return key, value, -1, new_version
 
-    def getByKeyVersion(self, key, version=-1.0):
+    def getByKeyVersion(self, key: str, version: float = -1):
         valueSeach = ''
         versionSeach = -1
 
         if version <= 0:
             maxVersion = -1
 
-            for k, v in self.returnDictionary().items():
+            for k, v in self.__dictionary.items():
                 if k == key:
                     for v0, v1 in v:
                         if v0 > maxVersion:
@@ -60,12 +61,15 @@ class ManipulateDictionary:
 if __name__ == '__main__':
     diconario = ManipulateDictionary()
 
-    for i in range(2):
+    for i in range(10):
         print(diconario.insertAndUpdate('A', f'Rafael'))
-        sleep(2)
+        sleep(.5)
 
-    for k, v in diconario.returnDictionary().items():
-        # for v0, v1 in v:
-        print(k)
+    # new_time = float(input(''))
+    print(diconario.getByKeyVersion('A'))
+
+    # for k, v in diconario.returnDictionary().items():
+    #     # for v0, v1 in v:
+    #     print(k)
 
     # print(diconario.getByKeyVersion('A', 169279))
