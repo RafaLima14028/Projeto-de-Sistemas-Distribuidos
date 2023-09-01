@@ -13,7 +13,6 @@ class ManipulateDictionary:
 
         if key in self.__dictionary:
             # Busca a versão antiga
-            # old_version = self.__dictionary[key][0][0]
             old_version = self.getByKeyVersion(key)[1]
 
             self.__dictionary[key].append((new_version, value))
@@ -22,7 +21,7 @@ class ManipulateDictionary:
             self.__dictionary[key] = [(new_version, value)]
             return key, value, -1, new_version
 
-    def getByKeyVersion(self, key: str, version: float = -1):
+    def getByKeyVersion(self, key: str, version: float = -1) -> (str, int):
         valueSeach = ''
         versionSeach = -1
 
