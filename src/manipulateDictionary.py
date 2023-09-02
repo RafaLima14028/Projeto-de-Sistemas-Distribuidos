@@ -7,7 +7,7 @@ class ManipulateDictionary:
     def __init__(self):
         self.__dictionary = dict()
 
-    def insertAndUpdate(self, key: str, value: str) -> (str, str, int, int):
+    def insertAndUpdate(self, key: str, value: str) -> (str, str, float, float):
         # Retorno é dado por chave, valor, versão antiga se houver e a nova versão
         new_version = time()
 
@@ -21,7 +21,7 @@ class ManipulateDictionary:
             self.__dictionary[key] = [(new_version, value)]
             return key, value, -1, new_version
 
-    def getByKeyVersion(self, key: str, version: float = -1) -> (str, int):
+    def getByKeyVersion(self, key: str, version: float = -1) -> (str, float):
         valueSeach = ''
         versionSeach = -1
 
@@ -53,8 +53,19 @@ class ManipulateDictionary:
         else:
             return valueSeach, versionSeach
 
+    def getRangeByKeyVersion(self, start_key: str, end_key: str, start_version: float = -1,
+                             end_version: float = -1) -> dict:
+        values_in_range = dict()
+
+        for k, list_tuplas in self.__dictionary.items():
+            if start_key <= k <= end_key:
+                values_in_range[k] = {tupla for tupla in list_tuplas if
+                                      start_version <= tupla[0] <= end_version}
+
+        return values_in_range
+
     # Remove todos os valores associados à chave, exceto a versão mais recente, e retorna valor e versão para a chave
-    def trim(self, key: str):
+    def trim(self, key: str) -> (str, str, float):
         if key in self.__dictionary:
             last_value, last_version = self.getByKeyVersion(key)
 
@@ -74,17 +85,17 @@ if __name__ == '__main__':
         print(diconario.insertAndUpdate('A', f'Rafael'))
         sleep(.5)
 
-    # new_time = float(input(''))
-    print(diconario.getByKeyVersion('A'))
-    print(diconario.trim('A'))
+    for i in range(3):
+        print(diconario.insertAndUpdate('B', f'Rafael2'))
+        sleep(.5)
+
+    for i in range(3):
+        print(diconario.insertAndUpdate('C', f'Rafael5'))
+        sleep(.5)
+
     print(diconario.returnDictionary())
-    #
-    # for i in range(2):
-    #     print(diconario.insertAndUpdate('A', f'Rafael'))
-    # print(diconario.returnDictionary())
 
-    # for k, v in diconario.returnDictionary().items():
-    #     # for v0, v1 in v:
-    #     print(k)
+    start_time = float(input())
+    end_time = float(input())
 
-    # print(diconario.getByKeyVersion('A', 169279))
+    print(diconario.getRangeByKeyVersion('A', 'B', start_time, end_time))
