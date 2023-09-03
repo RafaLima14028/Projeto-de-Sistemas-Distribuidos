@@ -7,9 +7,9 @@ class ManipulateDictionary:
     def __init__(self):
         self.__dictionary = dict()
 
-    def insertAndUpdate(self, key: str, value: str) -> (str, str, float, float):
+    def insertAndUpdate(self, key: str, value: str) -> (str, str, int, int):
         # Retorno é dado por chave, valor, versão antiga se houver e a nova versão
-        new_version = time()
+        new_version = int(time())
 
         if key in self.__dictionary:
             # Busca a versão antiga
@@ -55,11 +55,11 @@ class ManipulateDictionary:
 
     def getRangeByKeyVersion(self, start_key: str, end_key: str, start_version: float = -1,
                              end_version: float = -1) -> dict:
-        if (start_version > 0 or end_version > 0) and end_version > start_version:
+        if start_version > 0 and end_version > 0 and end_version > start_version:
             tmp = start_version
             start_version = end_version
             end_version = tmp
-        if end_key > start_key:
+        if end_key < start_key:
             tmp = start_key
             start_key = end_key
             end_key = tmp
@@ -76,9 +76,9 @@ class ManipulateDictionary:
                             else:
                                 values_in_range[k] = [(version_value, value_value)]
         else:
-            for k, list_tuplas in self.__dictionary.items():
-                if start_key <= k <= end_key:
-                    for version_value, value_value in list_tuplas:
+            for k, list_tuplas in self.__dictionary.items():  # Pega todos os elementos do dicionario
+                if start_key <= k <= end_key:  # Verifica se a chave está no range
+                    for version_value, value_value in list_tuplas:  # Intera sobre as tuplas de uma chave
                         if k in values_in_range:
                             values_in_range[k].append((version_value, value_value))
                         else:
@@ -115,7 +115,7 @@ if __name__ == '__main__':
         print(diconario.insertAndUpdate('C', f'Rafael5'))
         sleep(.5)
 
-    print(diconario.returnDictionary())
+    print(diconario.getRangeByKeyVersion('A', 'C'))
 
     # start_time = float(input())
     # end_time = float(input())

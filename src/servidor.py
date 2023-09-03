@@ -33,24 +33,43 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         return response
 
     def GetRange(self, request, context):
-        # from_key = request
+        from_key = request.from_key.key
+        from_version = request.from_key.ver
+
+        to_key = request.to_key.key
+        to_version = request.to_key.ver
+
+        responses = []
+
+        self.__dictionary.insertAndUpdate('A', 'Rafael 1')
+        self.__dictionary.insertAndUpdate('B', 'Rafael 2')
+        self.__dictionary.insertAndUpdate('C', 'Rafael 3')
+
+        # print(self.__dictionary.returnDictionary())
+
+        dict_range = self.__dictionary.getRangeByKeyVersion('A', 'C')
+
+        print(dict_range)
+
+        for key, values in dict_range:
+            for version, value in values:
+                yield interface_pb2.KeyValueVersionReply(
+                    key=key,
+                    val=value,
+                    ver=version
+                )
+
+                # responses.append(
+                #     interface_pb2.KeyValueVersionReply(
+                #         key=key,
+                #         val=value,
+                #         ver=version
+                #     )
+                # )
+
+        # responses = iter(responses)
         #
-        # print(request)
-        #
-        # response = [
-        #     interface_pb2.KeyValueVersionReply(
-        #         key='Rafael',
-        #         val='',
-        #         ver=-1
-        #     )
-        # ]
-        #
-        # return interface_pb2.KeyValueVersionReply(
-        #     key='Rafael',
-        #     val='',
-        #     ver=-1
-        # )
-        pass
+        # return responses
 
     def GetAll(self, request_iterator, context):
         pass
