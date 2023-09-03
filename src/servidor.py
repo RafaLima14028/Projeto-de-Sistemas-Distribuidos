@@ -59,13 +59,14 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         key = request.key
         value = request.val
 
-        self.__dictionary.insert(key, value)
+        key_returned, value_returned, old_version_returned, new_version_returned = \
+            self.__dictionary.insertAndUpdate(key, value)
 
         response = interface_pb2.PutReply(
-            key='Rafael',
-            old_val='2',
-            old_ver=0,
-            ver=2
+            key=key_returned,
+            old_val='',
+            old_ver=old_version_returned,
+            ver=new_version_returned
         )
 
         return response

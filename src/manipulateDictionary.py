@@ -13,13 +13,13 @@ class ManipulateDictionary:
 
         if key in self.__dictionary:
             # Busca a versão antiga
-            old_version = self.getByKeyVersion(key)[1]
+            old_value, old_version = self.getByKeyVersion(key)
 
             self.__dictionary[key].append((new_version, value))
-            return key, value, old_version, new_version
+            return key, old_value, old_version, new_version
         else:
             self.__dictionary[key] = [(new_version, value)]
-            return key, value, -1, new_version
+            return key, '', -1, new_version
 
     def getByKeyVersion(self, key: str, version: float = -1) -> (str, float):
         valueSeach = ''
@@ -55,12 +55,34 @@ class ManipulateDictionary:
 
     def getRangeByKeyVersion(self, start_key: str, end_key: str, start_version: float = -1,
                              end_version: float = -1) -> dict:
+        if (start_version > 0 or end_version > 0) and end_version > start_version:
+            tmp = start_version
+            start_version = end_version
+            end_version = tmp
+        if end_key > start_key:
+            tmp = start_key
+            start_key = end_key
+            end_key = tmp
+
         values_in_range = dict()
 
-        for k, list_tuplas in self.__dictionary.items():
-            if start_key <= k <= end_key:
-                values_in_range[k] = {tupla for tupla in list_tuplas if
-                                      start_version <= tupla[0] <= end_version}
+        if start_version > 0 and end_version > 0:
+            for k, list_tuplas in self.__dictionary.items():  # Pega todos os elementos do dicionario
+                if start_key <= k <= end_key:  # Verifica se a chave está no range
+                    for version_value, value_value in list_tuplas:  # Intera sobre as tuplas de uma chave
+                        if start_version <= version_value <= end_version:  # Verifica se a versão está no range desejado
+                            if k in values_in_range:
+                                values_in_range[k].append((version_value, value_value))
+                            else:
+                                values_in_range[k] = [(version_value, value_value)]
+        else:
+            for k, list_tuplas in self.__dictionary.items():
+                if start_key <= k <= end_key:
+                    for version_value, value_value in list_tuplas:
+                        if k in values_in_range:
+                            values_in_range[k].append((version_value, value_value))
+                        else:
+                            values_in_range[k] = [(version_value, value_value)]
 
         return values_in_range
 
@@ -95,7 +117,11 @@ if __name__ == '__main__':
 
     print(diconario.returnDictionary())
 
-    start_time = float(input())
-    end_time = float(input())
-
-    print(diconario.getRangeByKeyVersion('A', 'B', start_time, end_time))
+    # start_time = float(input())
+    # end_time = float(input())
+    #
+    # print()
+    # print()
+    # print()
+    #
+    # print(diconario.getRangeByKeyVersion('B', 'C', start_time, end_time))
