@@ -35,41 +35,23 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
     def GetRange(self, request, context):
         from_key = request.from_key.key
         from_version = request.from_key.ver
-
         to_key = request.to_key.key
         to_version = request.to_key.ver
 
-        responses = []
+        dict_range = self.__dictionary.getRangeByKeyVersion(
+            from_key, to_key,
+            from_version, to_version
+        )
 
-        self.__dictionary.insertAndUpdate('A', 'Rafael 1')
-        self.__dictionary.insertAndUpdate('B', 'Rafael 2')
-        self.__dictionary.insertAndUpdate('C', 'Rafael 3')
-
-        # print(self.__dictionary.returnDictionary())
-
-        dict_range = self.__dictionary.getRangeByKeyVersion('A', 'C')
-
-        print(dict_range)
-
-        for key, values in dict_range:
+        for key, values in dict_range.items():
             for version, value in values:
-                yield interface_pb2.KeyValueVersionReply(
+                response = interface_pb2.KeyValueVersionReply(
                     key=key,
                     val=value,
                     ver=version
                 )
 
-                # responses.append(
-                #     interface_pb2.KeyValueVersionReply(
-                #         key=key,
-                #         val=value,
-                #         ver=version
-                #     )
-                # )
-
-        # responses = iter(responses)
-        #
-        # return responses
+                yield response
 
     def GetAll(self, request_iterator, context):
         pass
@@ -96,12 +78,13 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
     def Del(self, request, context):
         key = request.key
-        version = request.ver
+
+        key_returned, last_value, last_version = self.__dictionary.delete(key)
 
         response = interface_pb2.KeyValueVersionReply(
-            key='Rafael',
-            val='2',
-            ver=3
+            key=key,
+            val=last_value,
+            ver=last_version
         )
 
         return response
@@ -117,10 +100,12 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
     def Trim(self, request, context):
         key = request.key
 
+        key_returned, last_value, last_version = self.__dictionary.trim(key)
+
         response = interface_pb2.KeyValueVersionReply(
-            key='Rafael',
-            val='2',
-            ver=4
+            key=key_returned,
+            val=last_value,
+            ver=last_version
         )
 
         return response

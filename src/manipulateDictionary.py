@@ -87,7 +87,7 @@ class ManipulateDictionary:
         return values_in_range
 
     # Remove todos os valores associados à chave, exceto a versão mais recente, e retorna valor e versão para a chave
-    def trim(self, key: str) -> (str, str, float):
+    def trim(self, key: str) -> (str, str, int):
         if key in self.__dictionary:
             last_value, last_version = self.getByKeyVersion(key)
 
@@ -99,23 +99,34 @@ class ManipulateDictionary:
     def returnDictionary(self):
         return self.__dictionary
 
+    def delete(self, key: str) -> (str, str, int):
+        if key in self.__dictionary:
+            last_value, last_version = self.getByKeyVersion(key)
+
+            del self.__dictionary[key]
+
+            return key, last_value, last_version
+        else:
+            return '', '', -1
+
 
 if __name__ == '__main__':
-    diconario = ManipulateDictionary()
+    dicionario = ManipulateDictionary()
 
     for i in range(3):
-        print(diconario.insertAndUpdate('A', f'Rafael'))
-        sleep(.5)
+        print(dicionario.insertAndUpdate('A', f'Rafael'))
+        sleep(.1)
 
     for i in range(3):
-        print(diconario.insertAndUpdate('B', f'Rafael2'))
-        sleep(.5)
+        print(dicionario.insertAndUpdate('B', f'Rafael2'))
+        sleep(.1)
 
     for i in range(3):
-        print(diconario.insertAndUpdate('C', f'Rafael5'))
-        sleep(.5)
+        print(dicionario.insertAndUpdate('C', f'Rafael5'))
+        sleep(.1)
 
-    print(diconario.getRangeByKeyVersion('A', 'C'))
+    print(dicionario.trim('B'))
+    print(dicionario.returnDictionary())
 
     # start_time = float(input())
     # end_time = float(input())

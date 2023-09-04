@@ -25,20 +25,55 @@ def get_range_client():
         # put_request = interface_pb2.KeyValueRequest(key='A', val='Rafael')
         # print(stub.Put(put_request))
 
-        responses = stub.GetRange(interface_pb2.KeyRange(
-            from_key=interface_pb2.KeyRequest(key='A'),
-            to_key=interface_pb2.KeyRequest(key='C')
-        ))
-        # responses = list(iter(responses))
+        try:
+            responses = stub.GetRange(interface_pb2.KeyRange(
+                from_key=interface_pb2.KeyRequest(key='A'),
+                to_key=interface_pb2.KeyRequest(key='C')
+            ))
 
-        # for response in responses:
-        #     print(response.key)
+            # O problema aparece nesse for
+            for response in responses:
+                print(response)
+        except grpc.RpcError as e:
+            print(f"Erro durante a transmissão gRPC: {e}")
 
-        #
-        for response in responses:
+
+def trim_client():
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        put_request = interface_pb2.KeyValueRequest(key='B', val='Rafael')
+        print(stub.Put(put_request))
+
+        print('-----')
+
+        try:
+            response = stub.Trim(interface_pb2.KeyRequest(
+                key='B'
+            )
+            )
+
             print(response)
+        except grpc.RpcError as e:
+            print(f"Erro durante a transmissão gRPC: {e}")
+
+
+def del_client():
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        put_request = interface_pb2.KeyValueRequest(key='B', val='Rafael')
+        print(stub.Put(put_request))
+
+        print('-----')
+
+        try:
+            response = stub.Del(interface_pb2.KeyRequest(key='B'))
+
+            print(response)
+        except grpc.RpcError as e:
+            print(f"Erro durante a transmissão gRPC: {e}")
 
 
 if __name__ == '__main__':
-    # run()
-    get_range_client()
+    del_client()
