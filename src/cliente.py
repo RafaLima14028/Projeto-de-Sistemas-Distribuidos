@@ -112,5 +112,24 @@ def get_all_client():
             print(f"Erro durante a transmissão gRPC: {e}")
 
 
+def del_all_client():
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        try:
+            key_request = [
+                interface_pb2.KeyRequest(key='D'),
+                interface_pb2.KeyRequest(key='A'),
+                interface_pb2.KeyRequest(key='Z')
+            ]
+
+            responses = stub.DelAll(iter(key_request))
+
+            for response in responses:
+                print(response)
+        except grpc.RpcError as e:
+            print(f"Erro durante a transmissão gRPC: {e}")
+
+
 if __name__ == '__main__':
-    get_all_client()
+    del_all_client()

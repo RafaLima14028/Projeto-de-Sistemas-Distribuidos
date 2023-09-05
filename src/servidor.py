@@ -120,8 +120,17 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
                 yield response
 
     def DelAll(self, request_iterator, context):
-        # Implement your DelAll logic here
-        pass
+        for request in request_iterator:
+            key = request.key
+
+            for data in self.__dictionary.delAll(key):
+                response = interface_pb2.KeyValueVersionReply(
+                    key=key,
+                    val=data[0],
+                    ver=data[1]
+                )
+
+                yield response
 
     def Trim(self, request, context):
         key = request.key

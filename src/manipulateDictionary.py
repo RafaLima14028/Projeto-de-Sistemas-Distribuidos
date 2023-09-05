@@ -140,6 +140,19 @@ class ManipulateDictionary:
 
         return values_in_range
 
+    def delAll(self, key: str) -> list:
+        list_data_in_range = list()
+
+        if key in self.__dictionary:
+            value_returned, version_returned = self.getByKeyVersion(key)
+            list_data_in_range.append((value_returned, version_returned))
+
+            del self.__dictionary[key]
+
+            return list_data_in_range
+        else:
+            return list_data_in_range
+
 
 if __name__ == '__main__':
     dicionario = ManipulateDictionary()
