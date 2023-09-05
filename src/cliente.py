@@ -21,7 +21,7 @@ def input_and_update(port: int = 50051) -> None:
             print('Response:')
             print(f'{reply}')
         except grpc.RpcError as e:
-            print(f"Erro durante a transmissão gRPC: {e}")
+            print(f"Error during gRPC transmission: {e}")
 
 
 def get(port: int = 50051) -> None:
@@ -47,7 +47,67 @@ def get(port: int = 50051) -> None:
                 print('Response:')
                 print(reply)
         except grpc.RpcError as e:
-            print(f"Erro durante a transmissão gRPC: {e}")
+            print(f"Error during gRPC transmission: {e}")
+
+
+def delete(port: int = 50051) -> None:
+    key_read = input('Enter the key you want to remove: ')
+
+    with grpc.insecure_channel(f'localhost:{port}') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        try:
+            reply = stub.Del(interface_pb2.KeyValueRequest(key=key_read))
+
+            if reply.ver <= 0:
+                print('This key has already been removed')
+            else:
+                print()
+                print('Response:')
+                print(reply)
+        except grpc.RpcError as e:
+            print(f"Error during gRPC transmission: {e}")
+
+
+# TODO: Retornar mais tuplas, está retornando apenas a última
+def delete_range(port: int = 50051) -> None:
+    from_key_read = input('Enter the initial key you want to remove: ')
+    end_key_read = input('Enter the end key you want to remove: ')
+
+    with grpc.insecure_channel(f'localhost:{port}') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        try:
+            replys = stub.DelRange(interface_pb2.KeyRange(
+                from_key=interface_pb2.KeyRequest(key=from_key_read),
+                to_key=interface_pb2.KeyRequest(key=end_key_read)
+            ))
+
+            print()
+            print('Response:')
+            for reply in replys:
+                print(reply)
+        except grpc.RpcError as e:
+            print(f"Error during gRPC transmission: {e}")
+
+
+def trim(port: int = 50051) -> None:
+    key_read = input('Enter the key you want to remove: ')
+
+    with grpc.insecure_channel(f'localhost:{port}') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        try:
+            reply = stub.Trim(interface_pb2.KeyRequest(key=key_read))
+
+            if reply.ver <= 0:
+                print('This key has already been removed')
+            else:
+                print()
+                print('Response:')
+                print(reply)
+        except grpc.RpcError as e:
+            print(f"Error during gRPC transmission: {e}")
 
 
 # def get_range_client():
@@ -63,7 +123,7 @@ def get(port: int = 50051) -> None:
 #             for response in responses:
 #                 print(response)
 #         except grpc.RpcError as e:
-#             print(f"Erro durante a transmissão gRPC: {e}")
+#             print(f"Error during gRPC transmission: {e}")
 #
 #
 # def trim_client():
@@ -83,24 +143,9 @@ def get(port: int = 50051) -> None:
 #
 #             print(response)
 #         except grpc.RpcError as e:
-#             print(f"Erro durante a transmissão gRPC: {e}")
+#             print(f"Error during gRPC transmission: {e}")
 #
 #
-# def del_client():
-#     with grpc.insecure_channel('localhost:50051') as channel:
-#         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
-#
-#         put_request = interface_pb2.KeyValueRequest(key='B', val='Rafael')
-#         print(stub.Put(put_request))
-#
-#         print('-----')
-#
-#         try:
-#             response = stub.Del(interface_pb2.KeyRequest(key='B'))
-#
-#             print(response)
-#         except grpc.RpcError as e:
-#             print(f"Erro durante a transmissão gRPC: {e}")
 #
 #
 # def del_range_client():
@@ -118,7 +163,7 @@ def get(port: int = 50051) -> None:
 #             for response in responses:
 #                 print(response)
 #         except grpc.RpcError as e:
-#             print(f"Erro durante a transmissão gRPC: {e}")
+#             print(f"Error during gRPC transmission: {e}")
 #
 #
 # def get_all_client():
@@ -137,7 +182,7 @@ def get(port: int = 50051) -> None:
 #             for response in responses:
 #                 print(response)
 #         except grpc.RpcError as e:
-#             print(f"Erro durante a transmissão gRPC: {e}")
+#             print(f"Error during gRPC transmission: {e}")
 #
 #
 # def del_all_client():
@@ -156,7 +201,7 @@ def get(port: int = 50051) -> None:
 #             for response in responses:
 #                 print(response)
 #         except grpc.RpcError as e:
-#             print(f"Erro durante a transmissão gRPC: {e}")
+#             print(f"Error during gRPC transmission: {e}")
 
 
 def options() -> None:
@@ -164,6 +209,9 @@ def options() -> None:
     print('###############')
     print('1 - Update/insert entered value and key')
     print('2 - Returns value by key and version')
+    print('3 - Removes all values associated with the key')
+    print('4 - Removes all values associated with the key, except the latest version')
+    print('5 - Removes values in the range between the two keys')
     print('###############')
     print()
 
@@ -178,5 +226,11 @@ if __name__ == '__main__':
                 input_and_update()
             case 2:
                 get()
+            case 3:
+                delete()
+            case 4:
+                trim()
+            case 5:
+                delete_range()
             case _:
                 print('This option is not valid!')

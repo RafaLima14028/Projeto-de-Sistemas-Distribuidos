@@ -110,6 +110,8 @@ class ManipulateDictionary:
             self.__dictionary[key].append((last_version, last_value))
 
             return key, last_value, last_version
+        else:
+            return key, '', -1
 
     def returnDictionary(self):
         return self.__dictionary

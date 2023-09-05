@@ -6,7 +6,10 @@ Mateus Rocha - XXX
 
 <h3>Funções concluídas:</h3>
 Put - Concluído</p>
-Get - Concluído
+Get - Concluído</p>
+Del - Concluído</p>
+Trim - Concluído</p>
+DelRange - Fazendo</p>
 
 <h3>Link para o vídeo</h3>
 TODO: Colocar o link
