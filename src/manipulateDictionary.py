@@ -86,6 +86,21 @@ class ManipulateDictionary:
 
         return values_in_range
 
+    def getAllInRange(self, key: str, version: int = -1) -> list:
+        list_data_in_range = list()
+
+        if key in self.__dictionary:
+            if version > 0:
+                value_returned, version_returned = self.getByKeyVersion(key)
+                list_data_in_range.append((value_returned, version_returned))
+            else:
+                for _, values in self.getRangeByKeyVersion(key, key).items():
+                    list_data_in_range.append(values)
+
+            return list_data_in_range
+        else:
+            return list_data_in_range
+
     # Remove todos os valores associados à chave, exceto a versão mais recente, e retorna valor e versão para a chave
     def trim(self, key: str) -> (str, str, int):
         if key in self.__dictionary:
@@ -109,6 +124,22 @@ class ManipulateDictionary:
         else:
             return '', '', -1
 
+    def delRange(self, start_key: str, end_key: str) -> dict:
+        values_in_range = dict()
+
+        for k, list_values in self.__dictionary.items():
+            if start_key <= k <= end_key:
+                for version_value, value_value in list_values:
+                    if k in values_in_range:
+                        values_in_range[k].append((version_value, value_value))
+                    else:
+                        values_in_range[k] = [(version_value, value_value)]
+
+        for key in list(values_in_range.keys()):
+            del self.__dictionary[key]
+
+        return values_in_range
+
 
 if __name__ == '__main__':
     dicionario = ManipulateDictionary()
@@ -125,7 +156,15 @@ if __name__ == '__main__':
         print(dicionario.insertAndUpdate('C', f'Rafael5'))
         sleep(.1)
 
-    print(dicionario.trim('B'))
+    for i in range(5):
+        print(dicionario.insertAndUpdate('D', f'Rafael5'))
+        sleep(.1)
+
+    for i in range(5):
+        print(dicionario.insertAndUpdate('F', f'Rafael5'))
+        sleep(.1)
+
+    print(dicionario.getAllInRange('B'))
     print(dicionario.returnDictionary())
 
     # start_time = float(input())

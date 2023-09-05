@@ -75,5 +75,42 @@ def del_client():
             print(f"Erro durante a transmissão gRPC: {e}")
 
 
+def del_range_client():
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        print('-----------')
+
+        try:
+            responses = stub.DelRange(interface_pb2.KeyRange(
+                from_key=interface_pb2.KeyRequest(key='A'),
+                to_key=interface_pb2.KeyRequest(key='D')
+            ))
+
+            for response in responses:
+                print(response)
+        except grpc.RpcError as e:
+            print(f"Erro durante a transmissão gRPC: {e}")
+
+
+def get_all_client():
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        try:
+            key_request = [
+                interface_pb2.KeyRequest(key='D'),
+                interface_pb2.KeyRequest(key='A'),
+                interface_pb2.KeyRequest(key='Z')
+            ]
+
+            responses = stub.GetAll(iter(key_request))
+
+            for response in responses:
+                print(response)
+        except grpc.RpcError as e:
+            print(f"Erro durante a transmissão gRPC: {e}")
+
+
 if __name__ == '__main__':
-    del_client()
+    get_all_client()

@@ -54,7 +54,21 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
                 yield response
 
     def GetAll(self, request_iterator, context):
-        pass
+        for request in request_iterator:
+            key = request.key
+            version = request.ver
+
+            list_range = self.__dictionary.getAllInRange(key, version)
+
+            for list_data in list_range:
+                for tupla in list_data:
+                    response = interface_pb2.KeyValueVersionReply(
+                        key=key,
+                        val=tupla[1],
+                        ver=tupla[0]
+                    )
+
+                    yield response
 
     def Put(self, request, context):
         key = request.key
@@ -90,8 +104,20 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         return response
 
     def DelRange(self, request, context):
-        # Implement your DelRange logic here
-        pass
+        from_key = request.from_key.key
+        to_key = request.to_key.key
+
+        dict_range = self.__dictionary.delRange(from_key, to_key)
+
+        for key, values in dict_range.items():
+            for version, value in values:
+                response = interface_pb2.KeyValueVersionReply(
+                    key=key,
+                    val=value,
+                    ver=version
+                )
+
+                yield response
 
     def DelAll(self, request_iterator, context):
         # Implement your DelAll logic here
