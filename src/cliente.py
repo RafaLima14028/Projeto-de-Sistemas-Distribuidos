@@ -115,7 +115,9 @@ def get_all(port: int = 50051) -> None:
         else:
             version_read = -1
 
-        data_read.append((key_read, version_read))
+        data_read.append(
+            interface_pb2.KeyRequest(key=key_read, ver=version_read)
+        )
 
         print()
 
@@ -128,7 +130,12 @@ def get_all(port: int = 50051) -> None:
             print()
             print('Response:')
             for response in responses:
-                print(response)
+                if response.ver <= 0:
+                    print(f'The key ({response.key}) are out of range or do not exist')
+                else:
+                    print(response)
+
+                print()
         except grpc.RpcError as e:
             print(f"Error during gRPC transmission: {e}")
 
