@@ -60,6 +60,13 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
             list_range = self.__dictionary.getAllInRange(key, version)
 
+            if len(list_range) <= 0:
+                yield interface_pb2.KeyValueVersionReply(
+                    key=key,
+                    val='',
+                    ver=-1
+                )
+
             for list_data in list_range:
                 for tupla in list_data:
                     response = interface_pb2.KeyValueVersionReply(
@@ -152,11 +159,14 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         return response
 
 
-def serve():
+def serve(port: int = 50051):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     interface_pb2_grpc.add_KeyValueStoreServicer_to_server(KeyValueStoreServicer(), server)
-    server.add_insecure_port('localhost:50051')  # Set the server port
+    server.add_insecure_port(f'localhost:{port}')  # Set the server port
     server.start()
+
+    print('Server listening...')
+
     server.wait_for_termination()
 
 

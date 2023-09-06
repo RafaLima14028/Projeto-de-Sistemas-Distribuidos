@@ -50,6 +50,89 @@ def get(port: int = 50051) -> None:
             print(f"Error during gRPC transmission: {e}")
 
 
+def get_range(port: int = 50051):
+    from_key_read = input('Type the initial key that you want to query: ')
+    print('If you want the latest version, dont put any version')
+    from_version_read = input('Enter initial version to search: ')
+
+    print()
+
+    to_key_read = input('Type the end key that you want to query: ')
+    print('If you want the latest version, dont put any version')
+    to_version_read = input('Enter end version to search: ')
+
+    print()
+
+    if from_version_read != '':
+        try:
+            from_version_read = int(from_version_read)
+        except ValueError:
+            from_version_read = -1
+    else:
+        from_version_read = -1
+
+    if to_version_read != '':
+        try:
+            to_version_read = int(to_version_read)
+        except ValueError:
+            to_version_read = -1
+    else:
+        to_version_read = -1
+
+    with grpc.insecure_channel(f'localhost:{port}') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        try:
+            responses = stub.GetRange(interface_pb2.KeyRange(
+                from_key=interface_pb2.KeyRequest(key=from_key_read, ver=from_version_read),
+                to_key=interface_pb2.KeyRequest(key=to_key_read, ver=to_version_read)
+            ))
+
+            print()
+            print('Response:')
+            for response in responses:
+                print(response)
+        except grpc.RpcError as e:
+            print(f"Error during gRPC transmission: {e}")
+
+
+def get_all(port: int = 50051) -> None:
+    data_read = []
+
+    while True:
+        key_read = input('Enter the key you want to fetch: ')
+
+        if key_read == '':
+            break
+
+        version_read = input(f'Enter the version for the key ({key_read}) you want to fetch: ')
+
+        if version_read != '':
+            try:
+                version_read = int(version_read)
+            except ValueError:
+                version_read = -1
+        else:
+            version_read = -1
+
+        data_read.append((key_read, version_read))
+
+        print()
+
+    with grpc.insecure_channel(f'localhost:{port}') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        try:
+            responses = stub.GetAll(iter(data_read))
+
+            print()
+            print('Response:')
+            for response in responses:
+                print(response)
+        except grpc.RpcError as e:
+            print(f"Error during gRPC transmission: {e}")
+
+
 def delete(port: int = 50051) -> None:
     key_read = input('Enter the key you want to remove: ')
 
@@ -69,7 +152,6 @@ def delete(port: int = 50051) -> None:
             print(f"Error during gRPC transmission: {e}")
 
 
-# TODO: Retornar mais tuplas, está retornando apenas a última
 def delete_range(port: int = 50051) -> None:
     from_key_read = input('Enter the initial key you want to remove: ')
     end_key_read = input('Enter the end key you want to remove: ')
@@ -110,100 +192,6 @@ def trim(port: int = 50051) -> None:
             print(f"Error during gRPC transmission: {e}")
 
 
-# def get_range_client():
-#     with grpc.insecure_channel('localhost:50051') as channel:
-#         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
-#
-#         try:
-#             responses = stub.GetRange(interface_pb2.KeyRange(
-#                 from_key=interface_pb2.KeyRequest(key='A'),
-#                 to_key=interface_pb2.KeyRequest(key='C')
-#             ))
-#
-#             for response in responses:
-#                 print(response)
-#         except grpc.RpcError as e:
-#             print(f"Error during gRPC transmission: {e}")
-#
-#
-# def trim_client():
-#     with grpc.insecure_channel('localhost:50051') as channel:
-#         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
-#
-#         put_request = interface_pb2.KeyValueRequest(key='B', val='Rafael')
-#         print(stub.Put(put_request))
-#
-#         print('-----')
-#
-#         try:
-#             response = stub.Trim(interface_pb2.KeyRequest(
-#                 key='B'
-#             )
-#             )
-#
-#             print(response)
-#         except grpc.RpcError as e:
-#             print(f"Error during gRPC transmission: {e}")
-#
-#
-#
-#
-# def del_range_client():
-#     with grpc.insecure_channel('localhost:50051') as channel:
-#         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
-#
-#         print('-----------')
-#
-#         try:
-#             responses = stub.DelRange(interface_pb2.KeyRange(
-#                 from_key=interface_pb2.KeyRequest(key='A'),
-#                 to_key=interface_pb2.KeyRequest(key='D')
-#             ))
-#
-#             for response in responses:
-#                 print(response)
-#         except grpc.RpcError as e:
-#             print(f"Error during gRPC transmission: {e}")
-#
-#
-# def get_all_client():
-#     with grpc.insecure_channel('localhost:50051') as channel:
-#         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
-#
-#         try:
-#             key_request = [
-#                 interface_pb2.KeyRequest(key='D'),
-#                 interface_pb2.KeyRequest(key='A'),
-#                 interface_pb2.KeyRequest(key='Z')
-#             ]
-#
-#             responses = stub.GetAll(iter(key_request))
-#
-#             for response in responses:
-#                 print(response)
-#         except grpc.RpcError as e:
-#             print(f"Error during gRPC transmission: {e}")
-#
-#
-# def del_all_client():
-#     with grpc.insecure_channel('localhost:50051') as channel:
-#         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
-#
-#         try:
-#             key_request = [
-#                 interface_pb2.KeyRequest(key='D'),
-#                 interface_pb2.KeyRequest(key='A'),
-#                 interface_pb2.KeyRequest(key='Z')
-#             ]
-#
-#             responses = stub.DelAll(iter(key_request))
-#
-#             for response in responses:
-#                 print(response)
-#         except grpc.RpcError as e:
-#             print(f"Error during gRPC transmission: {e}")
-
-
 def options() -> None:
     print()
     print('###############')
@@ -212,6 +200,8 @@ def options() -> None:
     print('3 - Removes all values associated with the key')
     print('4 - Removes all values associated with the key, except the latest version')
     print('5 - Removes values in the range between the two keys')
+    print('6 - Returns values in the range between the two keys')
+    print('7 - Returns values for keyset')
     print('###############')
     print()
 
@@ -232,5 +222,9 @@ if __name__ == '__main__':
                 trim()
             case 5:
                 delete_range()
+            case 6:
+                get_range()
+            case 7:
+                get_all()
             case _:
                 print('This option is not valid!')
