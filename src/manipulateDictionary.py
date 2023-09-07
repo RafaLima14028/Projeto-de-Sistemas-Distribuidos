@@ -95,20 +95,16 @@ class ManipulateDictionary:
 
         return values_in_range
 
-    def getAllInRange(self, key: str, version: int = -1) -> list:
-        list_data_in_range = list()
-
+    def getAllInRange(self, key: str, version: int = -1) -> (int, str):
         if key in self.__dictionary:
             if version > 0:
-                value_returned, version_returned = self.getByKeyVersion(key)
-                list_data_in_range.append((value_returned, version_returned))
+                value_returned, version_returned = self.getByKeyVersion(key, version)
+                return version_returned, value_returned
             else:
-                for _, values in self.getRangeByKeyVersion(key, key).items():
-                    list_data_in_range.append(values)
-
-            return list_data_in_range
+                value_returned, version_returned = self.getByKeyVersion(key)
+                return version_returned, value_returned
         else:
-            return list_data_in_range
+            return -1, ''
 
     # Remove todos os valores associados à chave, exceto a versão mais recente, e retorna valor e versão para a chave
     def trim(self, key: str) -> (str, str, int):

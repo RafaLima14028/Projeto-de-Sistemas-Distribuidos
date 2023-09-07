@@ -58,24 +58,15 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             key = request.key
             version = request.ver
 
-            list_range = self.__dictionary.getAllInRange(key, version)
+            version_returned, value_returned = self.__dictionary.getAllInRange(key, version)
 
-            if len(list_range) <= 0:
-                yield interface_pb2.KeyValueVersionReply(
-                    key=key,
-                    val='',
-                    ver=-1
-                )
+            response = interface_pb2.KeyValueVersionReply(
+                key=key,
+                val=value_returned,
+                ver=version_returned
+            )
 
-            for list_data in list_range:
-                for tupla in list_data:
-                    response = interface_pb2.KeyValueVersionReply(
-                        key=key,
-                        val=tupla[1],
-                        ver=tupla[0]
-                    )
-
-                    yield response
+            yield response
 
     def Put(self, request, context):
         key = request.key
