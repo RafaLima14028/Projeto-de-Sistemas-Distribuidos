@@ -17,6 +17,18 @@
 - [x] GetAll
 - [x] DelAll
 
+<h3>Métodos com tratamento de erros</h3>
+
+- [ ] Put
+- [x] Get
+- [ ] Del
+- [ ] Trim
+- [ ] GetRange
+- [ ] DelRange
+- [ ] PutAll 
+- [ ] GetAll
+- [ ] DelAll
+
 <h3>Requisitos</h3>
 
 - [x] Tabelas hash locais como cache para servidores

@@ -21,7 +21,7 @@ class ManipulateDictionary:
             self.__dictionary[key] = [(new_version, value)]
             return key, '', -1, new_version
 
-    def getByKeyVersion(self, key: str, version: float = -1) -> (str, float):
+    def getByKeyVersion(self, key: str, version: float = -1) -> (str, str, float):
         valueSeach = ''
         versionSeach = -1
 
@@ -35,11 +35,6 @@ class ManipulateDictionary:
                             maxVersion = v0
                             versionSeach = v0
                             valueSeach = v1
-
-            if valueSeach == '' and versionSeach == -1:
-                return None, -1
-            else:
-                return valueSeach, versionSeach
         else:
             for k, v in self.returnDictionary().items():
                 if k == key:
@@ -48,10 +43,10 @@ class ManipulateDictionary:
                             versionSeach = v0
                             valueSeach = v1
 
-        if valueSeach == '' and versionSeach == -1:
-            return None, -1
+        if valueSeach == '' and versionSeach <= 0:
+            return '', valueSeach, versionSeach
         else:
-            return valueSeach, versionSeach
+            return key, valueSeach, versionSeach
 
     def getRangeByKeyVersion(self, start_key: str, end_key: str, start_version: float = -1,
                              end_version: float = -1) -> dict:

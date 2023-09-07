@@ -5,6 +5,18 @@ import interface_pb2  # Import the generated protobuf Python code
 import interface_pb2_grpc  # Import the generated gRPC stubs
 
 
+def checkNumber(number: str) -> int:
+    if number != '':
+        try:
+            number = int(number)
+        except ValueError:
+            number = -1
+    else:
+        number = -1
+
+    return number
+
+
 def input_and_update(port: int = 50051) -> None:
     key_read = input('Enter key to insert/update: ')
     value_read = input('Enter the value for the key: ')
@@ -22,6 +34,7 @@ def input_and_update(port: int = 50051) -> None:
             print(f'{reply}')
         except grpc.RpcError as e:
             print(f"Error during gRPC transmission: {e}")
+
 
 def put_all(port: int = 50051) -> None:
     key_value_read = []
@@ -52,17 +65,16 @@ def put_all(port: int = 50051) -> None:
 
             print()
         except grpc.RpcError as e:
+            print()
             print(f"Error during gRPC transmission: {e}")
+
 
 def get(port: int = 50051) -> None:
     key_read = input('Enter the key for the search: ')
     print('If you want the latest version, dont put any version')
     version_read = input('Enter version to search: ')
 
-    if version_read != '':
-        version_read = int(version_read)
-    else:
-        version_read = -1
+    version_read = checkNumber(version_read)
 
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
@@ -71,13 +83,19 @@ def get(port: int = 50051) -> None:
             reply = stub.Get(interface_pb2.KeyRequest(key=key_read, ver=version_read))
 
             if reply.ver <= 0:
+                print()
                 print('Key or version is not present')
             else:
                 print()
                 print('Response:')
                 print(reply)
         except grpc.RpcError as e:
-            print(f"Error during gRPC transmission: {e}")
+            print()
+
+            if e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+                print(f'Server error: {e.details()}')
+            else:
+                print(f"Error during gRPC transmission: {e.details()}")
 
 
 def get_range(port: int = 50051):
@@ -209,6 +227,7 @@ def delete_range(port: int = 50051) -> None:
         except grpc.RpcError as e:
             print(f"Error during gRPC transmission: {e}")
 
+
 def delete_all(port: int = 50051) -> None:
     keys_read = []
 
@@ -236,6 +255,7 @@ def delete_all(port: int = 50051) -> None:
                     print(response)
         except grpc.RpcError as e:
             print(f"Error during gRPC transmission: {e}")
+
 
 def trim(port: int = 50051) -> None:
     key_read = input('Enter the key you want to remove: ')

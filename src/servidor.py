@@ -15,20 +15,19 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         key = request.key
         version = request.ver
 
-        response_dict = self.__dictionary.getByKeyVersion(key=key, version=version)
+        if key == '':
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('Unable to pass an empty key')
+            raise grpc.RpcError
 
-        if response_dict == (None, None):
-            response = interface_pb2.KeyValueVersionReply(
-                key=key,
-                val='',
-                ver=-1
-            )
-        else:
-            response = interface_pb2.KeyValueVersionReply(
-                key=key,
-                val=response_dict[0],
-                ver=response_dict[1]
-            )
+        key_returned, value_returned, version_returned = (
+            self.__dictionary.getByKeyVersion(key=key, version=version))
+
+        response = interface_pb2.KeyValueVersionReply(
+            key=key_returned,
+            val=value_returned,
+            ver=version_returned
+        )
 
         return response
 
@@ -115,27 +114,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         return iter(response)
 
-    # def PutAll(self, request_iterator, context):
-    #     for request in request_iterator:
-    #         key = request.key
-    #         value = request.val
-    #
-    #         for data in self.__dictionary.insertAndUpdate(key, value):
-    #             if data[1] == '':
-    #                 response = interface_pb2.PutReply(
-    #                     key=data[0],
-    #                     ver=data[3]
-    #                 )
-    #             else:
-    #                 response = interface_pb2.PutReply(
-    #                     key=data[0],
-    #                     old_val=data[1],
-    #                     old_ver=data[2],
-    #                     ver=data[3]
-    #                 )
-    #
-    #             yield response
-
     def Del(self, request, context):
         key = request.key
 
@@ -193,9 +171,13 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
 
 def serve(port: int = 50051):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    interface_pb2_grpc.add_KeyValueStoreServicer_to_server(KeyValueStoreServicer(), server)
-    server.add_insecure_port(f'localhost:{port}')  # Set the server port
+    try:
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+        interface_pb2_grpc.add_KeyValueStoreServicer_to_server(KeyValueStoreServicer(), server)
+        server.add_insecure_port(f'localhost:{port}')  # Set the server port
+    except grpc.RpcError as e:
+        print(f'Error during gRPC startup: {e}')
+
     server.start()
 
     print('Server listening...')
