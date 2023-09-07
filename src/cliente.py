@@ -23,6 +23,36 @@ def input_and_update(port: int = 50051) -> None:
         except grpc.RpcError as e:
             print(f"Error during gRPC transmission: {e}")
 
+def put_all(port: int = 50051) -> None:
+    key_value_read = []
+
+    while True:
+        key_read = input('Enter key to insert/update: ')
+        if key_read == '': break
+        value_read = input('Enter the value for the key: ')
+
+        key_value_read.append(
+            interface_pb2.KeyValueRequest(key=key_read, val=value_read)
+        )
+        print()
+
+    with grpc.insecure_channel(f'localhost:{port}') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        try:
+            responses = stub.PutAll(iter(key_value_read))
+
+            print()
+            print('Response:')
+            for response in responses:
+                if response.ver <= 0:
+                    print(f'The key ({response.key}) is out of range or does not exist')
+                else:
+                    print(response)
+
+            print()
+        except grpc.RpcError as e:
+            print(f"Error during gRPC transmission: {e}")
 
 def get(port: int = 50051) -> None:
     key_read = input('Enter the key for the search: ')
@@ -172,6 +202,33 @@ def delete_range(port: int = 50051) -> None:
         except grpc.RpcError as e:
             print(f"Error during gRPC transmission: {e}")
 
+def delete_all(port: int = 50051) -> None:
+    keys_read = []
+
+    while True:
+        key_read = input('Input key to delete: ')
+        if key_read == '': break
+
+        keys_read.append(
+            interface_pb2.KeyValueRequest(key=key_read)
+        )
+        print()
+
+    with grpc.insecure_channel(f'localhost:{port}') as channel:
+        stub = interface_pb2_grpc.KeyValueStoreStub(channel)
+
+        try:
+            responses = stub.DelAll(iter(keys_read))
+
+            print()
+            print('Response:')
+            for response in responses:
+                if response.ver <= 0:
+                    print('This key has already been removed')
+                else:
+                    print(response)
+        except grpc.RpcError as e:
+            print(f"Error during gRPC transmission: {e}")
 
 def trim(port: int = 50051) -> None:
     key_read = input('Enter the key you want to remove: ')
@@ -195,13 +252,15 @@ def trim(port: int = 50051) -> None:
 def options() -> None:
     print()
     print('###############')
-    print('1 - Update/insert entered value and key')
-    print('2 - Returns value by key and version')
-    print('3 - Removes all values associated with the key')
-    print('4 - Removes all values associated with the key, except the latest version')
-    print('5 - Removes values in the range between the two keys')
-    print('6 - Returns values in the range between the two keys')
-    print('7 - Returns values for keyset')
+    print('1 - [Put] Update/insert entered value and key')
+    print('2 - [PutAll] Update/insert list of values and keys')
+    print('3 - [Get] Returns value by key and version')
+    print('4 - [GetRange] Returns values in the range between the two keys')
+    print('5 - [GetAll] Returns values for keyset')
+    print('6 - [Del] Removes all values associated with the key')
+    print('7 - [DelRange] Removes values in the range between the two keys')
+    print('8 - [DelAll] Removes all values associated with a list of keys')
+    print('9 - [Trim] Removes all values associated with the key, except the latest version')
     print('###############')
     print()
 
@@ -215,16 +274,20 @@ if __name__ == '__main__':
             case 1:
                 input_and_update()
             case 2:
-                get()
+                put_all()
             case 3:
-                delete()
+                get()
             case 4:
-                trim()
-            case 5:
-                delete_range()
-            case 6:
                 get_range()
-            case 7:
+            case 5:
                 get_all()
+            case 6:
+                delete()
+            case 7:
+                delete_range()
+            case 8:
+                delete_all()
+            case 9:
+                trim()
             case _:
                 print('This option is not valid!')
