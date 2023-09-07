@@ -15,9 +15,6 @@ class ManipulateDictionary:
             # Busca a versão antiga
             old_value, old_version = self.getByKeyVersion(key)
 
-            # Se a timestamp para for a mesma entre versões
-            if new_version == old_version: new_version += 1
-
             self.__dictionary[key].append((new_version, value))
             return key, old_value, old_version, new_version
         else:
@@ -74,15 +71,6 @@ class ManipulateDictionary:
                                     values_in_range[key].append((version, value))
                                 else:
                                     values_in_range[key] = [(version, value)]
-
-            # for k, list_tuplas in self.__dictionary.items():  # Pega todos os elementos do dicionario
-            #     if start_key <= k <= end_key:  # Verifica se a chave está no range
-            #         for version_value, value_value in list_tuplas:  # Intera sobre as tuplas de uma chave
-            #             if start_version <= version_value <= end_version:  # Verifica se a versão está no range desejado
-            #                 if k in values_in_range:
-            #                     values_in_range[k].append((version_value, value_value))
-            #                 else:
-            #                     values_in_range[k] = [(version_value, value_value)]
         else:
             for k in list(self.__dictionary.keys()):
                 if start_key <= k <= end_key:
