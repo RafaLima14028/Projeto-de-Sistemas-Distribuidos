@@ -15,6 +15,9 @@ class ManipulateDictionary:
             # Busca a versão antiga
             old_value, old_version = self.getByKeyVersion(key)
 
+            # Se a timestamp para for a mesma entre versões
+            if new_version == old_version: new_version += 1
+
             self.__dictionary[key].append((new_version, value))
             return key, old_value, old_version, new_version
         else:

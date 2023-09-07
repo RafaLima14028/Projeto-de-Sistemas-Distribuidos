@@ -100,8 +100,50 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         return response
 
     def PutAll(self, request_iterator, context):
-        # Implement your PutAll logic here
-        pass
+        keys, values, response = [], [], []
+        for request in request_iterator:
+            keys.append(request.key)
+            values.append(request.val)
+
+        for key, value in zip(keys, values):
+            key_returned, old_value_returned, old_version_returned, new_version_returned = \
+                self.__dictionary.insertAndUpdate(key, value)
+
+            if old_value_returned == '':
+                response.append(interface_pb2.PutReply(
+                    key=key_returned,
+                    ver=new_version_returned
+                ))
+            else:
+                response.append(interface_pb2.PutReply(
+                    key=key_returned,
+                    old_val=old_value_returned,
+                    old_ver=old_version_returned,
+                    ver=new_version_returned
+                ))
+
+        return iter(response)
+
+    # def PutAll(self, request_iterator, context):
+    #     for request in request_iterator:
+    #         key = request.key
+    #         value = request.val
+    #
+    #         for data in self.__dictionary.insertAndUpdate(key, value):
+    #             if data[1] == '':
+    #                 response = interface_pb2.PutReply(
+    #                     key=data[0],
+    #                     ver=data[3]
+    #                 )
+    #             else:
+    #                 response = interface_pb2.PutReply(
+    #                     key=data[0],
+    #                     old_val=data[1],
+    #                     old_ver=data[2],
+    #                     ver=data[3]
+    #                 )
+    #
+    #             yield response
 
     def Del(self, request, context):
         key = request.key
