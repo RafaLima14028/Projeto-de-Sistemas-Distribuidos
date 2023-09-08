@@ -80,7 +80,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
                 context.set_details('Unable to pass an empty key')
                 raise grpc.RpcError
 
-            if value == '':
+            if version == '':
                 context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
                 context.set_details('Unable to pass an empty value')
                 raise grpc.RpcError

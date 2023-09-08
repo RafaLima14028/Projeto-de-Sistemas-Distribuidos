@@ -48,6 +48,9 @@ def put_all(port: int = 50051) -> None:
         key_read = input('Enter key to insert/update: ')
         if key_read == '': break
         value_read = input('Enter the value for the key: ')
+        if value_read == '':
+            print('Invalid value\n')
+            continue
 
         key_value_read.append(
             interface_pb2.KeyValueRequest(key=key_read, val=value_read)
@@ -316,26 +319,26 @@ def options() -> None:
 if __name__ == '__main__':
     while True:
         options()
-        option = int(input('Please enter a valid option: '))
+        option = input('Please enter a valid option: ')
 
         match option:
-            case 1:
+            case '1':
                 input_and_update()
-            case 2:
+            case '2':
                 put_all()
-            case 3:
+            case '3':
                 get()
-            case 4:
+            case '4':
                 get_range()
-            case 5:
+            case '5':
                 get_all()
-            case 6:
+            case '6':
                 delete()
-            case 7:
+            case '7':
                 delete_range()
-            case 8:
+            case '8':
                 delete_all()
-            case 9:
+            case '9':
                 trim()
             case _:
                 print('This option is not valid!')
