@@ -23,151 +23,267 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         key_returned, value_returned, version_returned = (
             self.__dictionary.getByKeyVersion(key=key, version=version))
 
-        response = interface_pb2.KeyValueVersionReply(
-            key=key_returned,
-            val=value_returned,
-            ver=version_returned
-        )
+        try:
+            response = interface_pb2.KeyValueVersionReply(
+                key=key_returned,
+                val=value_returned,
+                ver=version_returned
+            )
 
-        return response
+            return response
+        except grpc.RpcError as e:
+            context.set_code(e.code())
+            context.set_details(str(e.details()))
+            raise grpc.RpcError
 
     def GetRange(self, request, context):
         from_key = request.from_key.key
         from_version = request.from_key.ver
+
         to_key = request.to_key.key
         to_version = request.to_key.ver
+
+        if from_key == '' or to_key == '':
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('Unable to pass an empty key')
+            raise grpc.RpcError
 
         dict_range = self.__dictionary.getRangeByKeyVersion(
             from_key, to_key,
             from_version, to_version
         )
 
-        for key, values in dict_range.items():
-            for version, value in values:
-                response = interface_pb2.KeyValueVersionReply(
-                    key=key,
-                    val=value,
-                    ver=version
-                )
+        try:
+            for key, values in dict_range.items():
+                for version, value in values:
+                    response = interface_pb2.KeyValueVersionReply(
+                        key=key,
+                        val=value,
+                        ver=version
+                    )
 
-                yield response
+                    yield response
+        except grpc.RpcError as e:
+            context.set_code(e.code())
+            context.set_details(str(e.details()))
+            raise grpc.RpcError
 
     def GetAll(self, request_iterator, context):
+        keys, versions, response = [], [], []
+
         for request in request_iterator:
             key = request.key
             version = request.ver
 
-            version_returned, value_returned = self.__dictionary.getAllInRange(key, version)
+            if key == '':
+                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                context.set_details('Unable to pass an empty key')
+                raise grpc.RpcError
 
-            response = interface_pb2.KeyValueVersionReply(
-                key=key,
-                val=value_returned,
-                ver=version_returned
-            )
+            if value == '':
+                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                context.set_details('Unable to pass an empty value')
+                raise grpc.RpcError
 
-            yield response
+            keys.append(key)
+            versions.append(version)
+
+        try:
+            for key, version in zip(keys, versions):
+                version_returned, value_returned = self.__dictionary.getAllInRange(key, version)
+
+                response = interface_pb2.KeyValueVersionReply(
+                    key=key,
+                    val=value_returned,
+                    ver=version_returned
+                )
+
+                yield response
+        except grpc.RpcError as e:
+            context.set_code(e.code())
+            context.set_details(str(e.details()))
+            raise grpc.RpcError
 
     def Put(self, request, context):
         key = request.key
         value = request.val
 
+        if key == '':
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('Unable to pass an empty key')
+            raise grpc.RpcError
+
+        if value == '':
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('Unable to pass an empty value')
+            raise grpc.RpcError
+
         key_returned, old_value_returned, old_version_returned, new_version_returned = \
             self.__dictionary.insertAndUpdate(key, value)
 
-        if old_value_returned == '':
-            response = interface_pb2.PutReply(
-                key=key_returned,
-                ver=new_version_returned
-            )
-        else:
-            response = interface_pb2.PutReply(
-                key=key_returned,
-                old_val=old_value_returned,
-                old_ver=old_version_returned,
-                ver=new_version_returned
-            )
-
-        return response
-
-    def PutAll(self, request_iterator, context):
-        keys, values, response = [], [], []
-        for request in request_iterator:
-            keys.append(request.key)
-            values.append(request.val)
-
-        for key, value in zip(keys, values):
-            key_returned, old_value_returned, old_version_returned, new_version_returned = \
-                self.__dictionary.insertAndUpdate(key, value)
-
-            if old_value_returned == '':
-                response.append(interface_pb2.PutReply(
+        try:
+            if old_version_returned <= 0:
+                response = interface_pb2.PutReply(
                     key=key_returned,
                     ver=new_version_returned
-                ))
+                )
             else:
-                response.append(interface_pb2.PutReply(
+                response = interface_pb2.PutReply(
                     key=key_returned,
                     old_val=old_value_returned,
                     old_ver=old_version_returned,
                     ver=new_version_returned
-                ))
+                )
 
-        return iter(response)
+            return response
+        except grpc.RpcError as e:
+            context.set_code(e.code())
+            context.set_details(str(e.details()))
+            raise grpc.RpcError
+
+    def PutAll(self, request_iterator, context):
+        keys, values, response = [], [], []
+
+        for request in request_iterator:
+            key = request.key
+            value = request.val
+
+            if key == '':
+                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                context.set_details('Unable to pass an empty key')
+                raise grpc.RpcError
+
+            if value == '':
+                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                context.set_details('Unable to pass an empty value')
+                raise grpc.RpcError
+
+            keys.append(key)
+            values.append(value)
+
+        try:
+            for key, value in zip(keys, values):
+                key_returned, old_value_returned, old_version_returned, new_version_returned = \
+                    self.__dictionary.insertAndUpdate(key, value)
+
+                if old_value_returned == '':
+                    response.append(interface_pb2.PutReply(
+                        key=key_returned,
+                        ver=new_version_returned
+                    ))
+                else:
+                    response.append(interface_pb2.PutReply(
+                        key=key_returned,
+                        old_val=old_value_returned,
+                        old_ver=old_version_returned,
+                        ver=new_version_returned
+                    ))
+
+            return iter(response)
+        except grpc.RpcError as e:
+            context.set_code(e.code())
+            context.set_details(str(e.details()))
+            raise grpc.RpcError
 
     def Del(self, request, context):
         key = request.key
 
+        if key == '':
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('Unable to pass an empty key')
+            raise grpc.RpcError
+
         key_returned, last_value, last_version = self.__dictionary.delete(key)
 
-        response = interface_pb2.KeyValueVersionReply(
-            key=key,
-            val=last_value,
-            ver=last_version
-        )
+        try:
+            response = interface_pb2.KeyValueVersionReply(
+                key=key,
+                val=last_value,
+                ver=last_version
+            )
 
-        return response
+            return response
+        except grpc.RpcError as e:
+            context.set_code(e.code())
+            context.set_details(str(e.details()))
+            raise grpc.RpcError
 
     def DelRange(self, request, context):
         from_key = request.from_key.key
         to_key = request.to_key.key
 
+        if from_key == '' or to_key == '':
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('Unable to pass an empty key')
+            raise grpc.RpcError
+
         dict_range = self.__dictionary.delRange(from_key, to_key)
 
-        for key, values in dict_range.items():
-            for version, value in values:
-                response = interface_pb2.KeyValueVersionReply(
-                    key=key,
-                    val=value,
-                    ver=version
-                )
+        try:
+            for key, values in dict_range.items():
+                for version, value in values:
+                    response = interface_pb2.KeyValueVersionReply(
+                        key=key,
+                        val=value,
+                        ver=version
+                    )
 
-                yield response
+                    yield response
+        except grpc.RpcError as e:
+            context.set_code(e.code())
+            context.set_details(str(e.details()))
+            raise grpc.RpcError
 
     def DelAll(self, request_iterator, context):
+        keys = []
+
         for request in request_iterator:
             key = request.key
 
-            for data in self.__dictionary.delAll(key):
-                response = interface_pb2.KeyValueVersionReply(
-                    key=key,
-                    val=data[0],
-                    ver=data[1]
-                )
+            if key == '':
+                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                context.set_details('Unable to pass an empty key')
+                raise grpc.RpcError
 
-                yield response
+            keys.append(key)
+
+        try:
+            for key in keys:
+                for data in self.__dictionary.delAll(key):
+                    response = interface_pb2.KeyValueVersionReply(
+                        key=key,
+                        val=data[0],
+                        ver=data[1]
+                    )
+
+                    yield response
+        except grpc.RpcError as e:
+            context.set_code(e.code())
+            context.set_details(str(e.details()))
+            raise grpc.RpcError
 
     def Trim(self, request, context):
         key = request.key
 
+        if key == '':
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('Unable to pass an empty key')
+            raise grpc.RpcError
+
         key_returned, last_value, last_version = self.__dictionary.trim(key)
 
-        response = interface_pb2.KeyValueVersionReply(
-            key=key_returned,
-            val=last_value,
-            ver=last_version
-        )
+        try:
+            response = interface_pb2.KeyValueVersionReply(
+                key=key_returned,
+                val=last_value,
+                ver=last_version
+            )
 
-        return response
+            return response
+        except grpc.RpcError as e:
+            context.set_code(e.code())
+            context.set_details(str(e.details()))
+            raise grpc.RpcError
 
 
 def serve(port: int = 50051):

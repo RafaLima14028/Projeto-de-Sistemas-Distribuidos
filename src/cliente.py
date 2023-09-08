@@ -25,15 +25,20 @@ def input_and_update(port: int = 50051) -> None:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            put_request = interface_pb2.KeyValueRequest(key=key_read, val=value_read)
+            reply = stub.Put(interface_pb2.KeyValueRequest(key=key_read, val=value_read))
 
-            reply = stub.Put(put_request)
+            print('Passou aqui')
 
             print()
             print('Response:')
-            print(f'{reply}')
+            print(reply)
         except grpc.RpcError as e:
-            print(f"Error during gRPC transmission: {e}")
+            print()
+
+            if e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+                print(f'Server error: {e.details()}')
+            else:
+                print(f"Error during gRPC transmission: {e.details()}")
 
 
 def put_all(port: int = 50051) -> None:
@@ -66,7 +71,11 @@ def put_all(port: int = 50051) -> None:
             print()
         except grpc.RpcError as e:
             print()
-            print(f"Error during gRPC transmission: {e}")
+
+            if e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+                print(f'Server error: {e.details()}')
+            else:
+                print(f"Error during gRPC transmission: {e.details()}")
 
 
 def get(port: int = 50051) -> None:
@@ -111,21 +120,8 @@ def get_range(port: int = 50051):
 
     print()
 
-    if from_version_read != '':
-        try:
-            from_version_read = int(from_version_read)
-        except ValueError:
-            from_version_read = -1
-    else:
-        from_version_read = -1
-
-    if to_version_read != '':
-        try:
-            to_version_read = int(to_version_read)
-        except ValueError:
-            to_version_read = -1
-    else:
-        to_version_read = -1
+    from_version_read = checkNumber(from_version_read)
+    to_version_read = checkNumber(to_version_read)
 
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
@@ -141,7 +137,12 @@ def get_range(port: int = 50051):
             for response in responses:
                 print(response)
         except grpc.RpcError as e:
-            print(f"Error during gRPC transmission: {e}")
+            print()
+
+            if e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+                print(f'Server error: {e.details()}')
+            else:
+                print(f"Error during gRPC transmission: {e.details()}")
 
 
 def get_all(port: int = 50051) -> None:
@@ -154,14 +155,7 @@ def get_all(port: int = 50051) -> None:
             break
 
         version_read = input(f'Enter the version for the key ({key_read}) you want to fetch: ')
-
-        if version_read != '':
-            try:
-                version_read = int(version_read)
-            except ValueError:
-                version_read = -1
-        else:
-            version_read = -1
+        version_read = checkNumber(version_read)
 
         data_read.append(
             interface_pb2.KeyRequest(key=key_read, ver=version_read)
@@ -185,7 +179,12 @@ def get_all(port: int = 50051) -> None:
 
                 print()
         except grpc.RpcError as e:
-            print(f"Error during gRPC transmission: {e}")
+            print()
+
+            if e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+                print(f'Server error: {e.details()}')
+            else:
+                print(f"Error during gRPC transmission: {e.details()}")
 
 
 def delete(port: int = 50051) -> None:
@@ -198,13 +197,19 @@ def delete(port: int = 50051) -> None:
             reply = stub.Del(interface_pb2.KeyValueRequest(key=key_read))
 
             if reply.ver <= 0:
+                print()
                 print('This key has already been removed')
             else:
                 print()
                 print('Response:')
                 print(reply)
         except grpc.RpcError as e:
-            print(f"Error during gRPC transmission: {e}")
+            print()
+
+            if e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+                print(f'Server error: {e.details()}')
+            else:
+                print(f"Error during gRPC transmission: {e.details()}")
 
 
 def delete_range(port: int = 50051) -> None:
@@ -225,7 +230,12 @@ def delete_range(port: int = 50051) -> None:
             for reply in replys:
                 print(reply)
         except grpc.RpcError as e:
-            print(f"Error during gRPC transmission: {e}")
+            print()
+
+            if e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+                print(f'Server error: {e.details()}')
+            else:
+                print(f"Error during gRPC transmission: {e.details()}")
 
 
 def delete_all(port: int = 50051) -> None:
@@ -254,7 +264,12 @@ def delete_all(port: int = 50051) -> None:
                 else:
                     print(response)
         except grpc.RpcError as e:
-            print(f"Error during gRPC transmission: {e}")
+            print()
+
+            if e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+                print(f'Server error: {e.details()}')
+            else:
+                print(f"Error during gRPC transmission: {e.details()}")
 
 
 def trim(port: int = 50051) -> None:
@@ -267,13 +282,19 @@ def trim(port: int = 50051) -> None:
             reply = stub.Trim(interface_pb2.KeyRequest(key=key_read))
 
             if reply.ver <= 0:
+                print()
                 print('This key has already been removed')
             else:
                 print()
                 print('Response:')
                 print(reply)
         except grpc.RpcError as e:
-            print(f"Error during gRPC transmission: {e}")
+            print()
+
+            if e.code() == grpc.StatusCode.INVALID_ARGUMENT:
+                print(f'Server error: {e.details()}')
+            else:
+                print(f"Error during gRPC transmission: {e.details()}")
 
 
 def options() -> None:

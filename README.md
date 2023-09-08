@@ -19,15 +19,15 @@
 
 <h3>Métodos com tratamento de erros</h3>
 
-- [ ] Put
+- [x] Put
 - [x] Get
-- [ ] Del
-- [ ] Trim
-- [ ] GetRange
-- [ ] DelRange
-- [ ] PutAll 
-- [ ] GetAll
-- [ ] DelAll
+- [x] Del
+- [x] Trim
+- [x] GetRange
+- [x] DelRange
+- [x] PutAll 
+- [x] GetAll
+- [x] DelAll
 
 <h3>Requisitos</h3>
 

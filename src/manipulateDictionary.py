@@ -13,7 +13,7 @@ class ManipulateDictionary:
 
         if key in self.__dictionary:
             # Busca a versão antiga
-            old_value, old_version = self.getByKeyVersion(key)
+            _, old_value, old_version = self.getByKeyVersion(key)
 
             self.__dictionary[key].append((new_version, value))
             return key, old_value, old_version, new_version
@@ -69,7 +69,7 @@ class ManipulateDictionary:
         else:
             for k in list(self.__dictionary.keys()):
                 if start_key <= k <= end_key:
-                    value_returned, version_returned = self.getByKeyVersion(k)
+                    _, value_returned, version_returned = self.getByKeyVersion(k)
 
                     if k in values_in_range:
                         values_in_range[k].append((version_returned, value_returned))
@@ -81,10 +81,10 @@ class ManipulateDictionary:
     def getAllInRange(self, key: str, version: int = -1) -> (int, str):
         if key in self.__dictionary:
             if version > 0:
-                value_returned, version_returned = self.getByKeyVersion(key, version)
+                _, value_returned, version_returned = self.getByKeyVersion(key, version)
                 return version_returned, value_returned
             else:
-                value_returned, version_returned = self.getByKeyVersion(key)
+                _, value_returned, version_returned = self.getByKeyVersion(key)
                 return version_returned, value_returned
         else:
             return -1, ''
@@ -92,7 +92,7 @@ class ManipulateDictionary:
     # Remove todos os valores associados à chave, exceto a versão mais recente, e retorna valor e versão para a chave
     def trim(self, key: str) -> (str, str, int):
         if key in self.__dictionary:
-            last_value, last_version = self.getByKeyVersion(key)
+            _, last_value, last_version = self.getByKeyVersion(key)
 
             self.__dictionary[key].clear()
             self.__dictionary[key].append((last_version, last_value))
@@ -106,7 +106,7 @@ class ManipulateDictionary:
 
     def delete(self, key: str) -> (str, str, int):
         if key in self.__dictionary:
-            last_value, last_version = self.getByKeyVersion(key)
+            _, last_value, last_version = self.getByKeyVersion(key)
 
             del self.__dictionary[key]
 
@@ -140,7 +140,7 @@ class ManipulateDictionary:
         list_data_in_range = list()
 
         if key in self.__dictionary:
-            value_returned, version_returned = self.getByKeyVersion(key)
+            _, value_returned, version_returned = self.getByKeyVersion(key)
             list_data_in_range.append((value_returned, version_returned))
 
             del self.__dictionary[key]
