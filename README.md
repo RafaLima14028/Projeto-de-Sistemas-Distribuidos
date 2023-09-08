@@ -34,7 +34,7 @@
 - [x] Tabelas hash locais como cache para servidores
 - [ ] Documentação do esquema de dados das tabelas
 - [ ] Testes automatizados
-- [ ] Tratamento de erros
+- [x] Tratamento de erros
 - [ ] Execução de múltiplos clientes e servidores
 - [ ] Propagação _pub-sub_
 
