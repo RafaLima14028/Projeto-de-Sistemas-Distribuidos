@@ -9,9 +9,9 @@ message KeyRequest {
 
 message KeyRange {
     // from this key
-    KeyRequest from_key = 1;
+    KeyRequest fr = 1;
     // until this key
-    KeyRequest to_key = 2;
+    KeyRequest to = 2;
 }
 
 message KeyValueRequest {

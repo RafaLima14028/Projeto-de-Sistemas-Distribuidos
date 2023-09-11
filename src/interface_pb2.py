@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0finterface.proto\"3\n\nKeyRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x10\n\x03ver\x18\x02 \x01(\x03H\x00\x88\x01\x01\x42\x06\n\x04_ver\"F\n\x08KeyRange\x12\x1d\n\x08\x66rom_key\x18\x01 \x01(\x0b\x32\x0b.KeyRequest\x12\x1b\n\x06to_key\x18\x02 \x01(\x0b\x32\x0b.KeyRequest\"+\n\x0fKeyValueRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0b\n\x03val\x18\x02 \x01(\t\"=\n\x14KeyValueVersionReply\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0b\n\x03val\x18\x02 \x01(\t\x12\x0b\n\x03ver\x18\x03 \x01(\x03\"F\n\x08PutReply\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0f\n\x07old_val\x18\x02 \x01(\t\x12\x0f\n\x07old_ver\x18\x03 \x01(\x03\x12\x0b\n\x03ver\x18\x04 \x01(\x03\x32\xb6\x03\n\rKeyValueStore\x12+\n\x03Get\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00\x12\x30\n\x08GetRange\x12\t.KeyRange\x1a\x15.KeyValueVersionReply\"\x00\x30\x01\x12\x32\n\x06GetAll\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00(\x01\x30\x01\x12$\n\x03Put\x12\x10.KeyValueRequest\x1a\t.PutReply\"\x00\x12+\n\x06PutAll\x12\x10.KeyValueRequest\x1a\t.PutReply\"\x00(\x01\x30\x01\x12+\n\x03\x44\x65l\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00\x12\x30\n\x08\x44\x65lRange\x12\t.KeyRange\x1a\x15.KeyValueVersionReply\"\x00\x30\x01\x12\x32\n\x06\x44\x65lAll\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00(\x01\x30\x01\x12,\n\x04Trim\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0finterface.proto\"3\n\nKeyRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x10\n\x03ver\x18\x02 \x01(\x03H\x00\x88\x01\x01\x42\x06\n\x04_ver\"<\n\x08KeyRange\x12\x17\n\x02\x66r\x18\x01 \x01(\x0b\x32\x0b.KeyRequest\x12\x17\n\x02to\x18\x02 \x01(\x0b\x32\x0b.KeyRequest\"+\n\x0fKeyValueRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0b\n\x03val\x18\x02 \x01(\t\"=\n\x14KeyValueVersionReply\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0b\n\x03val\x18\x02 \x01(\t\x12\x0b\n\x03ver\x18\x03 \x01(\x03\"F\n\x08PutReply\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x0f\n\x07old_val\x18\x02 \x01(\t\x12\x0f\n\x07old_ver\x18\x03 \x01(\x03\x12\x0b\n\x03ver\x18\x04 \x01(\x03\x32\xb6\x03\n\rKeyValueStore\x12+\n\x03Get\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00\x12\x30\n\x08GetRange\x12\t.KeyRange\x1a\x15.KeyValueVersionReply\"\x00\x30\x01\x12\x32\n\x06GetAll\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00(\x01\x30\x01\x12$\n\x03Put\x12\x10.KeyValueRequest\x1a\t.PutReply\"\x00\x12+\n\x06PutAll\x12\x10.KeyValueRequest\x1a\t.PutReply\"\x00(\x01\x30\x01\x12+\n\x03\x44\x65l\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00\x12\x30\n\x08\x44\x65lRange\x12\t.KeyRange\x1a\x15.KeyValueVersionReply\"\x00\x30\x01\x12\x32\n\x06\x44\x65lAll\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00(\x01\x30\x01\x12,\n\x04Trim\x12\x0b.KeyRequest\x1a\x15.KeyValueVersionReply\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -24,13 +24,13 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_KEYREQUEST']._serialized_start=19
   _globals['_KEYREQUEST']._serialized_end=70
   _globals['_KEYRANGE']._serialized_start=72
-  _globals['_KEYRANGE']._serialized_end=142
-  _globals['_KEYVALUEREQUEST']._serialized_start=144
-  _globals['_KEYVALUEREQUEST']._serialized_end=187
-  _globals['_KEYVALUEVERSIONREPLY']._serialized_start=189
-  _globals['_KEYVALUEVERSIONREPLY']._serialized_end=250
-  _globals['_PUTREPLY']._serialized_start=252
-  _globals['_PUTREPLY']._serialized_end=322
-  _globals['_KEYVALUESTORE']._serialized_start=325
-  _globals['_KEYVALUESTORE']._serialized_end=763
+  _globals['_KEYRANGE']._serialized_end=132
+  _globals['_KEYVALUEREQUEST']._serialized_start=134
+  _globals['_KEYVALUEREQUEST']._serialized_end=177
+  _globals['_KEYVALUEVERSIONREPLY']._serialized_start=179
+  _globals['_KEYVALUEVERSIONREPLY']._serialized_end=240
+  _globals['_PUTREPLY']._serialized_start=242
+  _globals['_PUTREPLY']._serialized_end=312
+  _globals['_KEYVALUESTORE']._serialized_start=315
+  _globals['_KEYVALUESTORE']._serialized_end=753
 # @@protoc_insertion_point(module_scope)

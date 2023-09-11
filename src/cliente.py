@@ -1,6 +1,5 @@
-import json
-
 import grpc
+
 import interface_pb2  # Import the generated protobuf Python code
 import interface_pb2_grpc  # Import the generated gRPC stubs
 
@@ -131,8 +130,8 @@ def get_range(port: int = 50051):
 
         try:
             responses = stub.GetRange(interface_pb2.KeyRange(
-                from_key=interface_pb2.KeyRequest(key=from_key_read, ver=from_version_read),
-                to_key=interface_pb2.KeyRequest(key=to_key_read, ver=to_version_read)
+                fr=interface_pb2.KeyRequest(key=from_key_read, ver=from_version_read),
+                to=interface_pb2.KeyRequest(key=to_key_read, ver=to_version_read)
             ))
 
             print()
@@ -224,8 +223,8 @@ def delete_range(port: int = 50051) -> None:
 
         try:
             replys = stub.DelRange(interface_pb2.KeyRange(
-                from_key=interface_pb2.KeyRequest(key=from_key_read),
-                to_key=interface_pb2.KeyRequest(key=end_key_read)
+                fr=interface_pb2.KeyRequest(key=from_key_read),
+                to=interface_pb2.KeyRequest(key=end_key_read)
             ))
 
             print()

@@ -1,7 +1,9 @@
+from concurrent import futures
+
 import grpc
+
 import interface_pb2  # Import the generated protobuf Python code
 import interface_pb2_grpc  # Import the generated gRPC stubs
-from concurrent import futures
 from manipulateDictionary import ManipulateDictionary
 
 
@@ -37,11 +39,11 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
     def GetRange(self, request, context):
-        from_key = request.from_key.key
-        from_version = request.from_key.ver
+        from_key = request.fr.key
+        from_version = request.fr.ver
 
-        to_key = request.to_key.key
-        to_version = request.to_key.ver
+        to_key = request.to.key
+        to_version = request.to.ver
 
         if from_key == '' or to_key == '':
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
@@ -82,7 +84,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
             if version == '':
                 context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details('Unable to pass an empty value')
+                context.set_details('Unable to pass an empty version')
                 raise grpc.RpcError
 
             keys.append(key)
@@ -209,8 +211,8 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
     def DelRange(self, request, context):
-        from_key = request.from_key.key
-        to_key = request.to_key.key
+        from_key = request.fr.key
+        to_key = request.to.key
 
         if from_key == '' or to_key == '':
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
