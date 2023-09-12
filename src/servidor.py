@@ -125,7 +125,12 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         key_returned, old_value_returned, old_version_returned, new_version_returned = \
             self.__dictionary.insertAndUpdate(key, value)
 
-        mqtt_pubsub.pub(key, value)
+        try:
+            mqtt_pubsub.pub(key, value, new_version_returned)
+        except Exception as e:
+            context.set_code('Internal error')
+            context.set_details('Problem with cross-server operation')
+            raise grpc.RpcError
 
         try:
             if old_version_returned <= 0:
@@ -313,8 +318,10 @@ def serve(port: int):
 
 if __name__ == '__main__':
     port = None
+
     try:
-        port = int(sys.argv[1])
+        # port = int(sys.argv[1])
+        port = 50051
     except:
         print('Invalid port')
         exit(1)
