@@ -1,8 +1,9 @@
 from concurrent import futures
 
-import paho.mqtt.client as mqtt
+import sys
 import grpc
 
+import mqtt_pubsub
 import interface_pb2  # Import the generated protobuf Python code
 import interface_pb2_grpc  # Import the generated gRPC stubs
 from manipulateDictionary import ManipulateDictionary
@@ -123,6 +124,8 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         key_returned, old_value_returned, old_version_returned, new_version_returned = \
             self.__dictionary.insertAndUpdate(key, value)
+
+        mqtt_pubsub.pub(key, value)
 
         try:
             if old_version_returned <= 0:
@@ -288,42 +291,8 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details(str(e.details()))
             raise grpc.RpcError
 
-# paho.mqtt.python client class example
-class mqttClient(mqtt.Client):
 
-    def on_connect(self, mqttc, obj, flags, rc):
-        print("rc: "+str(rc))
-
-    def on_connect_fail(self, mqttc, obj):
-        print("Connect failed")
-
-    def on_message(self, mqttc, obj, msg):
-        print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))
-
-    def on_publish(self, mqttc, obj, mid):
-        print("mid: "+str(mid))
-
-    def on_subscribe(self, mqttc, obj, mid, granted_qos):
-        print("Subscribed: "+str(mid)+" "+str(granted_qos))
-
-    def on_log(self, mqttc, obj, level, string):
-        print(string)
-
-    def run(self):
-        self.connect("127.0.0.1", 1883, 60)
-        self.subscribe("projeto-sd", 2)
-
-        rc = 0
-        while rc == 0:
-            rc = self.loop()
-        return rc
-
-def mqtt_connect():
-    mqttc = mqttClient()
-    rc = mqttc.run()
-    print("rc: "+str(rc))
-
-def serve(port: int = 50051):
+def serve(port: int):
     try:
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         interface_pb2_grpc.add_KeyValueStoreServicer_to_server(KeyValueStoreServicer(), server)
@@ -333,11 +302,21 @@ def serve(port: int = 50051):
 
     server.start()
 
-    print('Server listening...')
+    print('Server listening on port ' + str(port) + '...')
+
+    mqttc = mqtt_pubsub.mqttClient()
+    rc = mqttc.run()
+    print("rc: " + str(rc))
 
     server.wait_for_termination()
 
 
 if __name__ == '__main__':
-    mqtt_connect()
-    serve()
+    port = None
+    try:
+        port = int(sys.argv[1])
+    except:
+        print('Invalid port')
+        exit(1)
+
+    serve(port)
