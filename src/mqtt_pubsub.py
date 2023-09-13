@@ -64,5 +64,6 @@ def pub(key: str, value: str, version: int) -> None:
 def get_queue():
     return msg_q
 
+
 def empty_queue():
     with msg_q.mutex: msg_q.queue.clear()

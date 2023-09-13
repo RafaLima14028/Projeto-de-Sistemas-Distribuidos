@@ -1,3 +1,4 @@
+import threading
 from concurrent import futures
 
 import sys
@@ -18,7 +19,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         self.__dictionary = ManipulateDictionary()
 
     def Get(self, request, context):
-        sync_queue()
         key = request.key
         version = request.ver
 
@@ -302,16 +302,21 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
 
 def sync_queue():
-    msg_q = mqtt_pubsub.get_queue()
+    while True:
+        msg_q = mqtt_pubsub.get_queue()
 
-    while not msg_q.empty():
-        msg = json.loads(str(msg_q.get()))
-        if msg is None: continue
-        print("recebeu mensagem: ", str(msg))
+        while not msg_q.empty():
+            msg = json.loads(str(msg_q.get()))
 
-    mqtt_pubsub.empty_queue()
+            if msg is None:
+                continue
 
-def serve(port: int):
+            print("recebeu mensagem: ", str(msg))
+
+        mqtt_pubsub.empty_queue()
+
+
+def serve(port: int) -> None:
     try:
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         interface_pb2_grpc.add_KeyValueStoreServicer_to_server(KeyValueStoreServicer(), server)
@@ -327,6 +332,9 @@ def serve(port: int):
     rc = mqttc.run()
     print("rc: " + str(rc))
 
+    thread_mqtt = threading.Thread(target=sync_queue)
+    thread_mqtt.start()
+
     server.wait_for_termination()
 
 
@@ -335,4 +343,5 @@ if __name__ == '__main__':
         port = int(sys.argv[1])
     except Exception as e:
         port = 50051
+
     serve(port)

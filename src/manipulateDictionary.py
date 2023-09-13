@@ -21,8 +21,19 @@ class ManipulateDictionary:
             self.__dictionary[key] = [(new_version, value)]
             return key, '', -1, new_version
 
-    def insertAndUpdateMQTT(self, key: str, value: str, version: int):
-        self.__dictionary[key].append((version, value))
+    def insertAndUpdateMQTT(self, key: str, value: str, version: int) -> bool:
+        for k, v in self.__dictionary.items():
+            if k == key:
+                for version_value, value_value in v:
+                    if version_value == version and value_value == value:
+                        return False
+
+        if key in self.__dictionary:
+            self.__dictionary[key].append((version, value))
+        else:
+            self.__dictionary[key] = [(version, value)]
+
+        return True
 
     def getByKeyVersion(self, key: str, version: float = -1) -> (str, str, float):
         valueSeach = ''
@@ -175,15 +186,3 @@ if __name__ == '__main__':
     for i in range(5):
         print(dicionario.insertAndUpdate('F', f'Rafael5'))
         sleep(.1)
-
-    print(dicionario.getRangeByKeyVersion('A', 'F'))
-    print(dicionario.returnDictionary())
-
-    # start_time = float(input())
-    # end_time = float(input())
-    #
-    # print()
-    # print()
-    # print()
-    #
-    # print(diconario.getRangeByKeyVersion('B', 'C', start_time, end_time))
