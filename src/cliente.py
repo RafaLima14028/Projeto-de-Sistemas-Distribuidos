@@ -1,4 +1,5 @@
 import grpc
+import sys
 
 import interface_pb2  # Import the generated protobuf Python code
 import interface_pb2_grpc  # Import the generated gRPC stubs
@@ -16,7 +17,7 @@ def checkNumber(number: str) -> int:
     return number
 
 
-def input_and_update(port: int = 50051) -> None:
+def input_and_update(port: int) -> None:
     key_read = input('Enter key to insert/update: ')
     value_read = input('Enter the value for the key: ')
 
@@ -40,7 +41,7 @@ def input_and_update(port: int = 50051) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def put_all(port: int = 50051) -> None:
+def put_all(port: int) -> None:
     key_value_read = []
 
     while True:
@@ -80,7 +81,7 @@ def put_all(port: int = 50051) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def get(port: int = 50051) -> None:
+def get(port: int) -> None:
     key_read = input('Enter the key for the search: ')
     print('If you want the latest version, dont put any version')
     version_read = input('Enter version to search: ')
@@ -109,7 +110,7 @@ def get(port: int = 50051) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def get_range(port: int = 50051):
+def get_range(port: int):
     from_key_read = input('Type the initial key that you want to query: ')
     print('If you want the latest version, dont put any version')
     from_version_read = input('Enter initial version to search: ')
@@ -147,7 +148,7 @@ def get_range(port: int = 50051):
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def get_all(port: int = 50051) -> None:
+def get_all(port: int) -> None:
     data_read = []
 
     while True:
@@ -189,7 +190,7 @@ def get_all(port: int = 50051) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def delete(port: int = 50051) -> None:
+def delete(port: int) -> None:
     key_read = input('Enter the key you want to remove: ')
 
     with grpc.insecure_channel(f'localhost:{port}') as channel:
@@ -214,7 +215,7 @@ def delete(port: int = 50051) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def delete_range(port: int = 50051) -> None:
+def delete_range(port: int) -> None:
     from_key_read = input('Enter the initial key you want to remove: ')
     end_key_read = input('Enter the end key you want to remove: ')
 
@@ -240,7 +241,7 @@ def delete_range(port: int = 50051) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def delete_all(port: int = 50051) -> None:
+def delete_all(port: int) -> None:
     keys_read = []
 
     while True:
@@ -274,7 +275,7 @@ def delete_all(port: int = 50051) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def trim(port: int = 50051) -> None:
+def trim(port: int) -> None:
     key_read = input('Enter the key you want to remove: ')
 
     with grpc.insecure_channel(f'localhost:{port}') as channel:
@@ -316,28 +317,33 @@ def options() -> None:
 
 
 if __name__ == '__main__':
+    try:
+        port = int(sys.argv[1])
+    except Exception as e:
+        port = 50051
+
     while True:
         options()
         option = input('Please enter a valid option: ')
 
         match option:
             case '1':
-                input_and_update()
+                input_and_update(port)
             case '2':
-                put_all()
+                put_all(port)
             case '3':
-                get()
+                get(port)
             case '4':
-                get_range()
+                get_range(port)
             case '5':
-                get_all()
+                get_all(port)
             case '6':
-                delete()
+                delete(port)
             case '7':
-                delete_range()
+                delete_range(port)
             case '8':
-                delete_all()
+                delete_all(port)
             case '9':
-                trim()
+                trim(port)
             case _:
                 print('This option is not valid!')

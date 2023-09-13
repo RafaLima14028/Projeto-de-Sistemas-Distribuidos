@@ -21,6 +21,9 @@ class ManipulateDictionary:
             self.__dictionary[key] = [(new_version, value)]
             return key, '', -1, new_version
 
+    def insertAndUpdateMQTT(self, key: str, value: str, version: int):
+        self.__dictionary[key].append((version, value))
+
     def getByKeyVersion(self, key: str, version: float = -1) -> (str, str, float):
         valueSeach = ''
         versionSeach = -1

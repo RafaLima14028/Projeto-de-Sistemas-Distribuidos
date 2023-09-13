@@ -2,6 +2,8 @@ from concurrent import futures
 
 import sys
 import grpc
+import json
+from queue import Queue
 
 import mqtt_pubsub
 import interface_pb2  # Import the generated protobuf Python code
@@ -16,6 +18,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         self.__dictionary = ManipulateDictionary()
 
     def Get(self, request, context):
+        sync_queue()
         key = request.key
         version = request.ver
 
@@ -109,6 +112,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
     def Put(self, request, context):
+        # sync_queue()
         key = request.key
         value = request.val
 
@@ -297,6 +301,16 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
 
+def sync_queue():
+    msg_q = mqtt_pubsub.get_queue()
+
+    while not msg_q.empty():
+        msg = json.loads(str(msg_q.get()))
+        if msg is None: continue
+        print("recebeu mensagem: ", str(msg))
+
+    mqtt_pubsub.empty_queue()
+
 def serve(port: int):
     try:
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -317,13 +331,8 @@ def serve(port: int):
 
 
 if __name__ == '__main__':
-    port = None
-
     try:
-        # port = int(sys.argv[1])
+        port = int(sys.argv[1])
+    except Exception as e:
         port = 50051
-    except:
-        print('Invalid port')
-        exit(1)
-
     serve(port)

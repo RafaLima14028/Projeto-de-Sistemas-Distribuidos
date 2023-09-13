@@ -1,17 +1,19 @@
 import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 
-from time import time
+from queue import Queue
 
 MQTT_HOST = "127.0.0.1"
-MQTT_TOPIC = "projeto-sd/"
+MQTT_TOPIC = "projeto-sd"
 MQTT_QOS = 2
+msg_q = Queue()
 
 
-# mosquitto_sub -h 127.0.0.1 -t projeto-sd/+
+# mosquitto_sub -h 127.0.0.1 -t projeto-sd
 
 # paho.mqtt.python client class example
 class mqttClient(mqtt.Client):
+
     def on_connect(self, mqttc, obj, flags, rc):
         print("rc: " + str(rc))
 
@@ -20,12 +22,8 @@ class mqttClient(mqtt.Client):
 
     def on_message(self, mqttc, obj, msg):
         print("topic:" + msg.topic + " qos:" + str(msg.qos) + " payload:" + str(msg.payload))
-
-        broken_message = str(msg.payload).split('/')
-        version = broken_message[0]
-        value = broken_message[1]
-
-        # return version, value
+        msg_q.put(str(msg.payload.decode("utf-8")))
+        print("msgq: ", msg_q)
 
     def on_publish(self, mqttc, obj, mid):
         print("mid: " + str(mid))
@@ -39,7 +37,7 @@ class mqttClient(mqtt.Client):
 
     def run(self):
         self.connect(MQTT_HOST, 1883, 60)
-        self.subscribe(MQTT_TOPIC + '#', MQTT_QOS)
+        self.subscribe(MQTT_TOPIC, MQTT_QOS)
 
         rc = 0
         while rc == 0:
@@ -47,23 +45,24 @@ class mqttClient(mqtt.Client):
 
         return rc
 
-    def sub(self, key):
-        self.subscribe(topic=MQTT_TOPIC + str(key),
-                       qos=MQTT_QOS)
-
-    def sync_all(self):
-        self.subscribe(topic=MQTT_TOPIC + '#',
+    def sub(self):
+        self.subscribe(topic=MQTT_TOPIC,
                        qos=MQTT_QOS)
 
 
 def pub(key: str, value: str, version: int) -> None:
     try:
-        publish.single(topic=MQTT_TOPIC + str(key),
-                       payload=str(version) + '/' + str(value),
+        publish.single(topic=MQTT_TOPIC,
+                       payload='{ "key": ' + str(key) +
+                               ', "version": ' + str(version) +
+                               ', "value": ' + str(value) + ' }',
                        qos=MQTT_QOS)
     except Exception as e:
         raise Exception(str(e))
 
 
-def dict_message(topic, payload):
-    return '...'
+def get_queue():
+    return msg_q
+
+def empty_queue():
+    with msg_q.mutex: msg_q.queue.clear()
