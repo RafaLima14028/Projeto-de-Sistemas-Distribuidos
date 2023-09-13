@@ -1,4 +1,5 @@
 import threading
+import time
 from concurrent import futures
 
 import sys
@@ -301,20 +302,20 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
 
-def sync_queue():
+def sync_queue() -> None:
     while True:
         msg_q = mqtt_pubsub.get_queue()
 
         while not msg_q.empty():
-            msg = json.loads(str(msg_q.get()))
+            msg = str(msg_q.get())
 
-            if msg is None:
-                continue
+            msg = msg[:-1]
+            msg = msg[1:]
+            msg = msg.split(',')
 
-            print("recebeu mensagem: ", str(msg))
-
-        mqtt_pubsub.empty_queue()
-
+            for m in msg:
+                m = m.split(':')
+                # Guardar o m[1] onde fica os dados de chave, valor, versão
 
 def serve(port: int) -> None:
     try:
@@ -329,13 +330,16 @@ def serve(port: int) -> None:
     print('Server listening on port ' + str(port) + '...')
 
     mqttc = mqtt_pubsub.mqttClient()
-    rc = mqttc.run()
-    print("rc: " + str(rc))
 
     thread_mqtt = threading.Thread(target=sync_queue)
     thread_mqtt.start()
 
+    rc = mqttc.run()
+
+    print("rc: " + str(rc))
+
     server.wait_for_termination()
+    # thread_mqtt.join()
 
 
 if __name__ == '__main__':

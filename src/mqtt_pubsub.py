@@ -23,7 +23,7 @@ class mqttClient(mqtt.Client):
     def on_message(self, mqttc, obj, msg):
         print("topic:" + msg.topic + " qos:" + str(msg.qos) + " payload:" + str(msg.payload))
         msg_q.put(str(msg.payload.decode("utf-8")))
-        print("msgq: ", msg_q)
+        # print("msgq: ", msg_q.get())
 
     def on_publish(self, mqttc, obj, mid):
         print("mid: " + str(mid))
@@ -66,4 +66,5 @@ def get_queue():
 
 
 def empty_queue():
-    with msg_q.mutex: msg_q.queue.clear()
+    with msg_q.mutex:
+        msg_q.queue.clear()
