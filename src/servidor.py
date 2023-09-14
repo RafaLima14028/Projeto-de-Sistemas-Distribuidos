@@ -4,7 +4,6 @@ from concurrent import futures
 
 import sys
 import grpc
-import json
 from queue import Queue
 
 import mqtt_pubsub
@@ -14,10 +13,10 @@ from manipulateDictionary import ManipulateDictionary
 
 
 class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
-    __dictionary = None
+    dictionary = None
 
     def __init__(self):
-        self.__dictionary = ManipulateDictionary()
+        self.dictionary = ManipulateDictionary()
 
     def Get(self, request, context):
         key = request.key
@@ -29,7 +28,8 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
         key_returned, value_returned, version_returned = (
-            self.__dictionary.getByKeyVersion(key=key, version=version))
+            self.dictionary.getByKeyVersion(key=key, version=version)
+        )
 
         try:
             response = interface_pb2.KeyValueVersionReply(
@@ -56,7 +56,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('Unable to pass an empty key')
             raise grpc.RpcError
 
-        dict_range = self.__dictionary.getRangeByKeyVersion(
+        dict_range = self.dictionary.getRangeByKeyVersion(
             from_key, to_key,
             from_version, to_version
         )
@@ -98,7 +98,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key, version in zip(keys, versions):
-                version_returned, value_returned = self.__dictionary.getAllInRange(key, version)
+                version_returned, value_returned = self.dictionary.getAllInRange(key, version)
 
                 response = interface_pb2.KeyValueVersionReply(
                     key=key,
@@ -113,7 +113,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
     def Put(self, request, context):
-        # sync_queue()
         key = request.key
         value = request.val
 
@@ -128,7 +127,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
         key_returned, old_value_returned, old_version_returned, new_version_returned = \
-            self.__dictionary.insertAndUpdate(key, value)
+            self.dictionary.insertAndUpdate(key, value)
 
         try:
             mqtt_pubsub.pub(key, value, new_version_returned)
@@ -180,7 +179,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         try:
             for key, value in zip(keys, values):
                 key_returned, old_value_returned, old_version_returned, new_version_returned = \
-                    self.__dictionary.insertAndUpdate(key, value)
+                    self.dictionary.insertAndUpdate(key, value)
 
                 if old_value_returned == '':
                     response.append(interface_pb2.PutReply(
@@ -209,7 +208,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('Unable to pass an empty key')
             raise grpc.RpcError
 
-        key_returned, last_value, last_version = self.__dictionary.delete(key)
+        key_returned, last_value, last_version = self.dictionary.delete(key)
 
         try:
             response = interface_pb2.KeyValueVersionReply(
@@ -233,7 +232,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('Unable to pass an empty key')
             raise grpc.RpcError
 
-        dict_range = self.__dictionary.delRange(from_key, to_key)
+        dict_range = self.dictionary.delRange(from_key, to_key)
 
         try:
             for key, values in dict_range.items():
@@ -265,7 +264,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key in keys:
-                for data in self.__dictionary.delAll(key):
+                for data in self.dictionary.delAll(key):
                     response = interface_pb2.KeyValueVersionReply(
                         key=key,
                         val=data[0],
@@ -286,7 +285,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('Unable to pass an empty key')
             raise grpc.RpcError
 
-        key_returned, last_value, last_version = self.__dictionary.trim(key)
+        key_returned, last_value, last_version = self.dictionary.trim(key)
 
         try:
             response = interface_pb2.KeyValueVersionReply(
@@ -302,25 +301,37 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
 
-def sync_queue() -> None:
+def sync_queue(class_work: KeyValueStoreServicer) -> None:
     while True:
         msg_q = mqtt_pubsub.get_queue()
 
         while not msg_q.empty():
             msg = str(msg_q.get())
 
-            msg = msg[:-1]
-            msg = msg[1:]
-            msg = msg.split(',')
+            msg = msg[:-1]  # Removes spaces at the end
+            msg = msg[1:]  # Removes spaces at the beginning
+            msg = msg.split(',')  # Break the string on of has ','
+
+            new_data = []
 
             for m in msg:
-                m = m.split(':')
-                # Guardar o m[1] onde fica os dados de chave, valor, versão
+                m = m.split(':')[1]  # Breaks the string where it has ':' and takes position 1 from it
+                m = m[1:]  # Removes the spaces in the new broken string
+
+                if m[-1] == ' ':
+                    m = m[:-1]
+
+                new_data.append(m)
+
+            class_work.dictionary.insertAndUpdateMQTT(new_data[0], new_data[2], int(new_data[1]))
+
 
 def serve(port: int) -> None:
+    class_work = KeyValueStoreServicer()
+
     try:
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-        interface_pb2_grpc.add_KeyValueStoreServicer_to_server(KeyValueStoreServicer(), server)
+        interface_pb2_grpc.add_KeyValueStoreServicer_to_server(class_work, server)
         server.add_insecure_port(f'localhost:{port}')  # Set the server port
     except grpc.RpcError as e:
         print(f'Error during gRPC startup: {e}')
@@ -331,15 +342,15 @@ def serve(port: int) -> None:
 
     mqttc = mqtt_pubsub.mqttClient()
 
-    thread_mqtt = threading.Thread(target=sync_queue)
+    thread_mqtt = threading.Thread(target=sync_queue, args=(class_work,))
     thread_mqtt.start()
 
     rc = mqttc.run()
 
     print("rc: " + str(rc))
 
+    thread_mqtt.join()
     server.wait_for_termination()
-    # thread_mqtt.join()
 
 
 if __name__ == '__main__':

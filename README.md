@@ -35,7 +35,7 @@ dictionary['key2'] = [(version3, value3)]
 - [ ] Testes automatizados
 - [x] Tratamento de erros
 - [ ] Execução de múltiplos clientes e servidores
-- [ ] Propagação _pub-sub_
+- [x] Propagação _pub-sub_
 
 ### Instalação e execução
 
