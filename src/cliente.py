@@ -25,9 +25,9 @@ def input_and_update(port: int) -> None:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            reply = stub.Put(interface_pb2.KeyValueRequest(key=key_read, val=value_read))
-
-            print('Passou aqui')
+            reply = stub.Put(
+                interface_pb2.KeyValueRequest(key=key_read, val=value_read)
+            )
 
             print()
             print('Response:')
@@ -46,8 +46,12 @@ def put_all(port: int) -> None:
 
     while True:
         key_read = input('Enter key to insert/update: ')
-        if key_read == '': break
+
+        if key_read == '':
+            break
+
         value_read = input('Enter the value for the key: ')
+
         if value_read == '':
             print('Invalid value\n')
             continue
@@ -55,6 +59,7 @@ def put_all(port: int) -> None:
         key_value_read.append(
             interface_pb2.KeyValueRequest(key=key_read, val=value_read)
         )
+
         print()
 
     with grpc.insecure_channel(f'localhost:{port}') as channel:
@@ -130,10 +135,12 @@ def get_range(port: int):
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            responses = stub.GetRange(interface_pb2.KeyRange(
-                fr=interface_pb2.KeyRequest(key=from_key_read, ver=from_version_read),
-                to=interface_pb2.KeyRequest(key=to_key_read, ver=to_version_read)
-            ))
+            responses = stub.GetRange(
+                interface_pb2.KeyRange(
+                    fr=interface_pb2.KeyRequest(key=from_key_read, ver=from_version_read),
+                    to=interface_pb2.KeyRequest(key=to_key_read, ver=to_version_read)
+                )
+            )
 
             print()
             print('Response:')
@@ -197,7 +204,9 @@ def delete(port: int) -> None:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            reply = stub.Del(interface_pb2.KeyValueRequest(key=key_read))
+            reply = stub.Del(
+                interface_pb2.KeyValueRequest(key=key_read)
+            )
 
             if reply.ver <= 0:
                 print()
@@ -223,10 +232,12 @@ def delete_range(port: int) -> None:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            replys = stub.DelRange(interface_pb2.KeyRange(
-                fr=interface_pb2.KeyRequest(key=from_key_read),
-                to=interface_pb2.KeyRequest(key=end_key_read)
-            ))
+            replys = stub.DelRange(
+                interface_pb2.KeyRange(
+                    fr=interface_pb2.KeyRequest(key=from_key_read),
+                    to=interface_pb2.KeyRequest(key=end_key_read)
+                )
+            )
 
             print()
             print('Response:')
@@ -246,11 +257,14 @@ def delete_all(port: int) -> None:
 
     while True:
         key_read = input('Input key to delete: ')
-        if key_read == '': break
+
+        if key_read == '':
+            break
 
         keys_read.append(
             interface_pb2.KeyValueRequest(key=key_read)
         )
+
         print()
 
     with grpc.insecure_channel(f'localhost:{port}') as channel:
@@ -263,7 +277,7 @@ def delete_all(port: int) -> None:
             print('Response:')
             for response in responses:
                 if response.ver <= 0:
-                    print('This key has already been removed')
+                    print('This key has already been removed or not exists')
                 else:
                     print(response)
         except grpc.RpcError as e:
@@ -282,7 +296,9 @@ def trim(port: int) -> None:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            reply = stub.Trim(interface_pb2.KeyRequest(key=key_read))
+            reply = stub.Trim(
+                interface_pb2.KeyRequest(key=key_read)
+            )
 
             if reply.ver <= 0:
                 print()

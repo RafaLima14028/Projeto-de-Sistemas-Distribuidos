@@ -64,11 +64,19 @@ def pub_insert(key: str, value: str, version: int) -> None:
 def pub_delete(key: str) -> None:
     try:
         publish.single(topic=MQTT_TOPIC + '/delete',
-                       # payload='{ "key": ' + str(key) +
-                       #         ', "version": ' + str(version) +
-                       #         ', "value": ' + str(value) + ' }',
                        payload=str(key),
                        qos=MQTT_QOS)
+    except Exception as e:
+        raise Exception(str(e))
+
+
+def pub_trim(key: str) -> None:
+    try:
+        publish.single(
+            topic=MQTT_TOPIC + '/trim',
+            payload=str(key),
+            qos=MQTT_QOS
+        )
     except Exception as e:
         raise Exception(str(e))
 

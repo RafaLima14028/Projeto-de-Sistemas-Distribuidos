@@ -13,14 +13,14 @@
 - [x] Trim
 - [x] GetRange
 - [x] DelRange
-- [x] PutAll 
+- [x] PutAll
 - [x] GetAll
 - [x] DelAll
 
 ### Esquema de dados
 
-Para o armazenamento dos dados foi utilizado um dicionário, 
-de forma que cada chave (string) tem uma lista de tuplas contendo 
+Para o armazenamento dos dados foi utilizado um dicionário,
+de forma que cada chave (string) tem uma lista de tuplas contendo
 versão (inteiro) e um valor (string). Por exemplo:
 
 ```python
@@ -34,8 +34,8 @@ dictionary['key2'] = [(version3, value3)]
 - [x] Documentação do esquema de dados das tabelas
 - [ ] Testes automatizados
 - [x] Tratamento de erros
-- [ ] Execução de múltiplos clientes e servidores
-- [ ] Propagação _pub-sub_
+- [x] Execução de múltiplos clientes e servidores
+- [x] Propagação _pub-sub_
 
 ### Instalação e execução
 
@@ -53,4 +53,5 @@ chmod +x compile.sh
 ```
 
 ### Link para o vídeo
+
 TODO: Colocar o link

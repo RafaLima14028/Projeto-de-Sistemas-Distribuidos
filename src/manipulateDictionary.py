@@ -58,7 +58,7 @@ class ManipulateDictionary:
                             valueSeach = v1
 
         if valueSeach == '' and versionSeach <= 0:
-            return '', valueSeach, versionSeach
+            return '', '', -1
         else:
             return key, valueSeach, versionSeach
 
@@ -113,7 +113,7 @@ class ManipulateDictionary:
 
             return key, last_value, last_version
         else:
-            return key, '', -1
+            return '', '', -1
 
     def returnDictionary(self):
         return self.__dictionary
@@ -151,38 +151,11 @@ class ManipulateDictionary:
         return values_in_range
 
     def delAll(self, key: str) -> list:
-        list_data_in_range = list()
-
         if key in self.__dictionary:
             _, value_returned, version_returned = self.getByKeyVersion(key)
-            list_data_in_range.append((value_returned, version_returned))
 
             del self.__dictionary[key]
 
-            return list_data_in_range
+            return key, value_returned, version_returned
         else:
-            return list_data_in_range
-
-
-if __name__ == '__main__':
-    dicionario = ManipulateDictionary()
-
-    for i in range(3):
-        print(dicionario.insertAndUpdate('A', f'Rafael'))
-        sleep(.1)
-
-    for i in range(3):
-        print(dicionario.insertAndUpdate('B', f'Rafael2'))
-        sleep(.1)
-
-    for i in range(3):
-        print(dicionario.insertAndUpdate('C', f'Rafael5'))
-        sleep(.1)
-
-    for i in range(5):
-        print(dicionario.insertAndUpdate('D', f'Rafael5'))
-        sleep(.1)
-
-    for i in range(5):
-        print(dicionario.insertAndUpdate('F', f'Rafael5'))
-        sleep(.1)
+            return '', '', -1
