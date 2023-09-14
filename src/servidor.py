@@ -130,7 +130,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             self.dictionary.insertAndUpdate(key, value)
 
         try:
-            mqtt_pubsub.pub(key, value, new_version_returned)
+            mqtt_pubsub.pub_insert(key, value, new_version_returned)
         except Exception as e:
             context.set_code('Internal error')
             context.set_details('Problem with cross-server operation')
@@ -209,6 +209,14 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
         key_returned, last_value, last_version = self.dictionary.delete(key)
+
+        if key_returned != '':
+            try:
+                mqtt_pubsub.pub_delete(key)
+            except Exception as e:
+                context.set_code('Internal error')
+                context.set_details('Problem with cross-server operation')
+                raise grpc.RpcError
 
         try:
             response = interface_pb2.KeyValueVersionReply(
@@ -308,22 +316,14 @@ def sync_queue(class_work: KeyValueStoreServicer) -> None:
         while not msg_q.empty():
             msg = str(msg_q.get())
 
-            msg = msg[:-1]  # Removes spaces at the end
-            msg = msg[1:]  # Removes spaces at the beginning
-            msg = msg.split(',')  # Break the string on of has ','
+            msg = msg.split(',')
 
-            new_data = []
+            topic = msg[0]
 
-            for m in msg:
-                m = m.split(':')[1]  # Breaks the string where it has ':' and takes position 1 from it
-                m = m[1:]  # Removes the spaces in the new broken string
-
-                if m[-1] == ' ':
-                    m = m[:-1]
-
-                new_data.append(m)
-
-            class_work.dictionary.insertAndUpdateMQTT(new_data[0], new_data[2], int(new_data[1]))
+            if topic == 'projeto-sd/insert':
+                class_work.dictionary.insertAndUpdateMQTT(msg[1], msg[3], int(msg[2]))
+            elif topic == 'projeto-sd/delete':
+                class_work.dictionary.delete(msg[1])
 
 
 def serve(port: int) -> None:

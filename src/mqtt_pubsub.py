@@ -22,7 +22,7 @@ class mqttClient(mqtt.Client):
 
     def on_message(self, mqttc, obj, msg):
         print("topic:" + msg.topic + " qos:" + str(msg.qos) + " payload:" + str(msg.payload))
-        msg_q.put(str(msg.payload.decode("utf-8")))
+        msg_q.put(str(msg.topic) + ',' + str(msg.payload.decode("utf-8")))
 
     def on_publish(self, mqttc, obj, mid):
         print("mid: " + str(mid))
@@ -36,7 +36,7 @@ class mqttClient(mqtt.Client):
 
     def run(self):
         self.connect(MQTT_HOST, 1883, 60)
-        self.subscribe(MQTT_TOPIC, MQTT_QOS)
+        self.subscribe(MQTT_TOPIC + str('/+'), MQTT_QOS)
 
         rc = 0
         while rc == 0:
@@ -49,12 +49,25 @@ class mqttClient(mqtt.Client):
                        qos=MQTT_QOS)
 
 
-def pub(key: str, value: str, version: int) -> None:
+def pub_insert(key: str, value: str, version: int) -> None:
     try:
-        publish.single(topic=MQTT_TOPIC,
-                       payload='{ "key": ' + str(key) +
-                               ', "version": ' + str(version) +
-                               ', "value": ' + str(value) + ' }',
+        publish.single(topic=MQTT_TOPIC + '/insert',
+                       # payload='{ "key": ' + str(key) +
+                       #         ', "version": ' + str(version) +
+                       #         ', "value": ' + str(value) + ' }',
+                       payload=str(key) + ',' + str(version) + ',' + str(value),
+                       qos=MQTT_QOS)
+    except Exception as e:
+        raise Exception(str(e))
+
+
+def pub_delete(key: str) -> None:
+    try:
+        publish.single(topic=MQTT_TOPIC + '/delete',
+                       # payload='{ "key": ' + str(key) +
+                       #         ', "version": ' + str(version) +
+                       #         ', "value": ' + str(value) + ' }',
+                       payload=str(key),
                        qos=MQTT_QOS)
     except Exception as e:
         raise Exception(str(e))
