@@ -34,8 +34,8 @@ dictionary['key2'] = [(version3, value3)]
 - [x] Documentação do esquema de dados das tabelas
 - [ ] Testes automatizados
 - [x] Tratamento de erros
-- [x] Execução de múltiplos clientes e servidores
-- [x] Propagação _pub-sub_
+- [ ] Execução de múltiplos clientes e servidores
+- [ ] Propagação _pub-sub_
 
 ### Instalação e execução
 
