@@ -1,11 +1,12 @@
-import grpc
 import sys
+
+import grpc
 
 import interface_pb2  # Import the generated protobuf Python code
 import interface_pb2_grpc  # Import the generated gRPC stubs
 
 
-def checkNumber(number: str) -> int:
+def check_number(number: str) -> int:
     if number != '':
         try:
             number = int(number)
@@ -17,16 +18,13 @@ def checkNumber(number: str) -> int:
     return number
 
 
-def input_and_update(port: int) -> None:
-    key_read = input('Enter key to insert/update: ')
-    value_read = input('Enter the value for the key: ')
-
+def put(port: int, key: str, value: str) -> None:
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
             reply = stub.Put(
-                interface_pb2.KeyValueRequest(key=key_read, val=value_read)
+                interface_pb2.KeyValueRequest(key=key, val=value)
             )
 
             print()
@@ -41,32 +39,18 @@ def input_and_update(port: int) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def put_all(port: int) -> None:
-    key_value_read = []
-
-    while True:
-        key_read = input('Enter key to insert/update: ')
-
-        if key_read == '':
-            break
-
-        value_read = input('Enter the value for the key: ')
-
-        if value_read == '':
-            print('Invalid value\n')
-            continue
-
-        key_value_read.append(
-            interface_pb2.KeyValueRequest(key=key_read, val=value_read)
+def put_all(port: int, keys_values_read: []) -> None:
+    keys_values = []
+    for i in range(0, len(keys_values_read)):
+        keys_values.append(
+            interface_pb2.KeyValueRequest(key=keys_values_read[i][0], val=keys_values_read[i][1])
         )
-
-        print()
 
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            responses = stub.PutAll(iter(key_value_read))
+            responses = stub.PutAll(iter(keys_values))
 
             print()
             print('Response:')
@@ -86,18 +70,12 @@ def put_all(port: int) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def get(port: int) -> None:
-    key_read = input('Enter the key for the search: ')
-    print('If you want the latest version, dont put any version')
-    version_read = input('Enter version to search: ')
-
-    version_read = checkNumber(version_read)
-
+def get(port: int, key: str, version: int) -> None:
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            reply = stub.Get(interface_pb2.KeyRequest(key=key_read, ver=version_read))
+            reply = stub.Get(interface_pb2.KeyRequest(key=key, ver=version))
 
             if reply.ver <= 0:
                 print()
@@ -115,30 +93,15 @@ def get(port: int) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def get_range(port: int):
-    from_key_read = input('Type the initial key that you want to query: ')
-    print('If you want the latest version, dont put any version')
-    from_version_read = input('Enter initial version to search: ')
-
-    print()
-
-    to_key_read = input('Type the end key that you want to query: ')
-    print('If you want the latest version, dont put any version')
-    to_version_read = input('Enter end version to search: ')
-
-    print()
-
-    from_version_read = checkNumber(from_version_read)
-    to_version_read = checkNumber(to_version_read)
-
+def get_range(port: int, from_key: str, to_key: str, from_version: int, to_version: int):
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
             responses = stub.GetRange(
                 interface_pb2.KeyRange(
-                    fr=interface_pb2.KeyRequest(key=from_key_read, ver=from_version_read),
-                    to=interface_pb2.KeyRequest(key=to_key_read, ver=to_version_read)
+                    fr=interface_pb2.KeyRequest(key=from_key, ver=from_version),
+                    to=interface_pb2.KeyRequest(key=to_key, ver=to_version)
                 )
             )
 
@@ -155,29 +118,18 @@ def get_range(port: int):
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def get_all(port: int) -> None:
-    data_read = []
-
-    while True:
-        key_read = input('Enter the key you want to fetch: ')
-
-        if key_read == '':
-            break
-
-        version_read = input(f'Enter the version for the key ({key_read}) you want to fetch: ')
-        version_read = checkNumber(version_read)
-
-        data_read.append(
-            interface_pb2.KeyRequest(key=key_read, ver=version_read)
+def get_all(port: int, keys_versions_read: []) -> None:
+    keys_versions = []
+    for i in range(0, len(keys_versions_read)):
+        keys_versions.append(
+            interface_pb2.KeyRequest(key=keys_versions_read[i][0], ver=keys_versions_read[i][1])
         )
-
-        print()
 
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            responses = stub.GetAll(iter(data_read))
+            responses = stub.GetAll(iter(keys_versions))
 
             print()
             print('Response:')
@@ -197,15 +149,13 @@ def get_all(port: int) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def delete(port: int) -> None:
-    key_read = input('Enter the key you want to remove: ')
-
+def delete(port: int, key: str) -> None:
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
             reply = stub.Del(
-                interface_pb2.KeyValueRequest(key=key_read)
+                interface_pb2.KeyValueRequest(key=key)
             )
 
             if reply.ver <= 0:
@@ -224,24 +174,21 @@ def delete(port: int) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def delete_range(port: int) -> None:
-    from_key_read = input('Enter the initial key you want to remove: ')
-    end_key_read = input('Enter the end key you want to remove: ')
-
+def delete_range(port: int, from_key: str, to_key: str) -> None:
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            replys = stub.DelRange(
+            replies = stub.DelRange(
                 interface_pb2.KeyRange(
-                    fr=interface_pb2.KeyRequest(key=from_key_read),
-                    to=interface_pb2.KeyRequest(key=end_key_read)
+                    fr=interface_pb2.KeyRequest(key=from_key),
+                    to=interface_pb2.KeyRequest(key=to_key)
                 )
             )
 
             print()
             print('Response:')
-            for reply in replys:
+            for reply in replies:
                 print(reply)
         except grpc.RpcError as e:
             print()
@@ -252,26 +199,18 @@ def delete_range(port: int) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def delete_all(port: int) -> None:
-    keys_read = []
-
-    while True:
-        key_read = input('Input key to delete: ')
-
-        if key_read == '':
-            break
-
-        keys_read.append(
-            interface_pb2.KeyValueRequest(key=key_read)
+def delete_all(port: int, keys_read: []) -> None:
+    keys = []
+    for i in range(0, len(keys_read)):
+        keys.append(
+            interface_pb2.KeyValueRequest(key=keys_read[i])
         )
-
-        print()
 
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
-            responses = stub.DelAll(iter(keys_read))
+            responses = stub.DelAll(iter(keys))
 
             print()
             print('Response:')
@@ -289,15 +228,13 @@ def delete_all(port: int) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def trim(port: int) -> None:
-    key_read = input('Enter the key you want to remove: ')
-
+def trim(port: int, key: str) -> None:
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
         try:
             reply = stub.Trim(
-                interface_pb2.KeyRequest(key=key_read)
+                interface_pb2.KeyRequest(key=key)
             )
 
             if reply.ver <= 0:
@@ -316,14 +253,14 @@ def trim(port: int) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def options() -> None:
+def menu_options() -> None:
     print()
     print('###############')
     print('1 - [Put] Update/insert entered value and key')
     print('2 - [PutAll] Update/insert list of values and keys')
     print('3 - [Get] Returns value by key and version')
     print('4 - [GetRange] Returns values in the range between the two keys')
-    print('5 - [GetAll] Returns values for keyset')
+    print('5 - [GetAll] Returns all values for a list of keys')
     print('6 - [Del] Removes all values associated with the key')
     print('7 - [DelRange] Removes values in the range between the two keys')
     print('8 - [DelAll] Removes all values associated with a list of keys')
@@ -332,34 +269,91 @@ def options() -> None:
     print()
 
 
+def menu() -> None:
+    while True:
+        menu_options()
+        option = input('Please enter a valid option: ')
+
+        match option:
+            case '1':  # [Put]
+                key_read = input('Enter key to insert/update: ')
+                value_read = input('Enter the value for the key: ')
+                put(port, key_read, value_read)
+
+            case '2':  # [PutAll]
+                key_value_read = []
+                while True:
+                    key_read = input('Enter key to insert/update: ')
+                    if key_read == '':
+                        break
+                    value_read = input('Enter the value for the key: ')
+                    if value_read == '':
+                        print('Invalid value\n')
+                        continue
+                    key_value_read.append((key_read, value_read))
+                put_all(port, key_value_read)
+
+            case '3':  # [Get]
+                key_read = input('Enter the key for the search: ')
+                print('If you want the latest version, dont put any version')
+                version_read = input('Enter version to search: ')
+                version_read = check_number(version_read)
+                get(port, key_read, version_read)
+
+            case '4':  # [GetRange]
+                from_key_read = input('Type the initial key that you want to query: ')
+                print('If you want the latest version, dont put any version')
+                from_version_read = input('Enter initial version to search: ')
+                print()
+                to_key_read = input('Type the end key that you want to query: ')
+                print('If you want the latest version, dont put any version')
+                to_version_read = input('Enter end version to search: ')
+                print()
+                from_version_read = check_number(from_version_read)
+                to_version_read = check_number(to_version_read)
+                get_range(port, from_key_read, to_key_read, from_version_read, to_version_read)
+
+            case '5':  # [GetAll]
+                keys_versions_read = []
+                while True:
+                    key_read = input('Enter the key you want to fetch: ')
+                    if key_read == '':
+                        break
+                    version_read = input(f'Enter the version for the key ({key_read}) you want to fetch: ')
+                    version_read = check_number(version_read)
+                    keys_versions_read.append((key_read, version_read))
+                get_all(port, keys_versions_read)
+
+            case '6':  # [Delete]
+                key_read = input('Enter the key you want to remove: ')
+                delete(port, key_read)
+
+            case '7':  # [DeleteRange]
+                from_key_read = input('Enter the initial key you want to remove: ')
+                end_key_read = input('Enter the end key you want to remove: ')
+                delete_range(port, from_key_read, end_key_read)
+
+            case '8':  # [DeleteAll]
+                keys_read = []
+                while True:
+                    key_read = input('Input key to delete: ')
+                    if key_read == '':
+                        break
+                    keys_read.append(key_read)
+                delete_all(port, keys_read)
+
+            case '9':  # [Trim]
+                key_read = input('Enter the key you want to remove: ')
+                trim(port, key_read)
+
+            case _:
+                print('This option is not valid!')
+
+
 if __name__ == '__main__':
     try:
         port = int(sys.argv[1])
     except Exception as e:
         port = 50051
 
-    while True:
-        options()
-        option = input('Please enter a valid option: ')
-
-        match option:
-            case '1':
-                input_and_update(port)
-            case '2':
-                put_all(port)
-            case '3':
-                get(port)
-            case '4':
-                get_range(port)
-            case '5':
-                get_all(port)
-            case '6':
-                delete(port)
-            case '7':
-                delete_range(port)
-            case '8':
-                delete_all(port)
-            case '9':
-                trim(port)
-            case _:
-                print('This option is not valid!')
+    menu()

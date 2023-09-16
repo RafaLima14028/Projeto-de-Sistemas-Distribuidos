@@ -1,13 +1,12 @@
+import sys
 import threading
 from concurrent import futures
 
-import sys
 import grpc
-from queue import Queue
 
-import mqtt_pubsub
 import interface_pb2  # Import the generated protobuf Python code
 import interface_pb2_grpc  # Import the generated gRPC stubs
+import mqtt_pubsub
 from manipulateDictionary import ManipulateDictionary
 
 
