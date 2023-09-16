@@ -1,4 +1,4 @@
-<h1 style="text-align: center;">Projeto de Sistemas Distribuídos</h1>
+<h1 align="center">Projeto de Sistemas Distribuídos</h1>
 
 ### Integrantes
 
@@ -17,6 +17,15 @@
 - [x] GetAll
 - [x] DelAll
 
+### Requisitos
+
+- [x] Tabelas hash locais como cache para servidores
+- [x] Documentação do esquema de dados das tabelas
+- [x] Testes automatizados
+- [x] Tratamento de erros
+- [x] Execução de múltiplos clientes e servidores
+- [x] Propagação _pub-sub_
+
 ### Esquema de dados
 
 Para o armazenamento dos dados foi utilizado um dicionário,
@@ -28,14 +37,21 @@ dictionary['key1'] = [(version1, value1), (version2, value2), ...]
 dictionary['key2'] = [(version3, value3)] 
 ```
 
-### Requisitos
+As mensagens _pub-sub_ foram formatadas da seguinte forma:
 
-- [x] Tabelas hash locais como cache para servidores
-- [x] Documentação do esquema de dados das tabelas
-- [ ] Testes automatizados
-- [x] Tratamento de erros
-- [x] Execução de múltiplos clientes e servidores
-- [x] Propagação _pub-sub_
+```python
+# inserção:
+topic='projeto-sd/insert'
+payload='key,version,value'
+
+# remoção:
+topic='projeto-sd/delete'
+payload='key'
+
+# trim:
+topic='projeto-sd/trim'
+payload='key'
+```
 
 ### Instalação e execução
 
@@ -48,8 +64,17 @@ git clone https://github.com/RafaLima14028/Projeto-de-Sistemas-Distribuidos.git
 Instale as dependências necessárias e compile os arquivos gRPC:
 
 ```bash
+cd Projeto-de-Sistemas-Distribuidos
 chmod +x compile.sh
 ./compile.sh
+```
+
+Inicialize o _mosquitto_, servidor e cliente:
+
+```bash
+mosquitto -v
+./server.sh
+./client.sh
 ```
 
 ### Link para o vídeo
