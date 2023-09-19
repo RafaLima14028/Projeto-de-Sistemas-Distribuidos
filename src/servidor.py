@@ -1,13 +1,12 @@
 import sys
 import threading
 from concurrent import futures
-
 import grpc
-
 import interface_pb2  # Import the generated protobuf Python code
 import interface_pb2_grpc  # Import the generated gRPC stubs
 import mqtt_pubsub
 from manipulateDictionary import ManipulateDictionary
+from utils import check_string
 
 
 class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
@@ -20,9 +19,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         key = request.key
         version = request.ver
 
-        if key == '':
+        if check_string(key):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details('Unable to pass an empty key')
+            context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
         key_returned, value_returned, version_returned = (
@@ -49,9 +48,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         to_key = request.to.key
         to_version = request.to.ver
 
-        if from_key == '' or to_key == '':
+        if check_string(from_key) or check_string(to_key):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details('Unable to pass an empty key')
+            context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
         dict_range = self.dictionary.getRangeByKeyVersion(
@@ -81,14 +80,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             key = request.key
             version = request.ver
 
-            if key == '':
+            if check_string(key):
                 context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details('Unable to pass an empty key')
-                raise grpc.RpcError
-
-            if version == '':
-                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details('Unable to pass an empty version')
+                context.set_details('You entered some wrong value')
                 raise grpc.RpcError
 
             keys.append(key)
@@ -114,14 +108,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         key = request.key
         value = request.val
 
-        if key == '':
+        if check_string(key) or check_string(value):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details('Unable to pass an empty key')
-            raise grpc.RpcError
-
-        if value == '':
-            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details('Unable to pass an empty value')
+            context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
         key_returned, old_value_returned, old_version_returned, new_version_returned = \
@@ -161,14 +150,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             key = request.key
             value = request.val
 
-            if key == '':
+            if check_string(key) or check_string(value):
                 context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details('Unable to pass an empty key')
-                raise grpc.RpcError
-
-            if value == '':
-                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details('Unable to pass an empty value')
+                context.set_details('You entered some wrong value')
                 raise grpc.RpcError
 
             keys.append(key)
@@ -208,9 +192,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
     def Del(self, request, context):
         key = request.key
 
-        if key == '':
+        if check_string(key):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details('Unable to pass an empty key')
+            context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
         key_returned, last_value, last_version = self.dictionary.delete(key)
@@ -240,9 +224,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         from_key = request.fr.key
         to_key = request.to.key
 
-        if from_key == '' or to_key == '':
+        if check_string(from_key) or check_string(to_key):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details('Unable to pass an empty key')
+            context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
         dict_range = self.dictionary.delRange(from_key, to_key)
@@ -275,9 +259,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         for request in request_iterator:
             key = request.key
 
-            if key == '':
+            if check_string(key):
                 context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details('Unable to pass an empty key')
+                context.set_details('You entered some wrong value')
                 raise grpc.RpcError
 
             keys.append(key)
@@ -309,9 +293,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
     def Trim(self, request, context):
         key = request.key
 
-        if key == '':
+        if check_string(key):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-            context.set_details('Unable to pass an empty key')
+            context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
         key_returned, last_value, last_version = self.dictionary.trim(key)

@@ -1,21 +1,8 @@
 import sys
-
 import grpc
-
 import interface_pb2  # Import the generated protobuf Python code
 import interface_pb2_grpc  # Import the generated gRPC stubs
-
-
-def check_number(number: str) -> int:
-    if number != '':
-        try:
-            number = int(number)
-        except ValueError:
-            number = -1
-    else:
-        number = -1
-
-    return number
+from utils import check_number
 
 
 def put(port: int, key: str, value: str) -> None:
@@ -120,6 +107,7 @@ def get_range(port: int, from_key: str, to_key: str, from_version: int, to_versi
 
 def get_all(port: int, keys_versions_read: []) -> None:
     keys_versions = []
+
     for i in range(0, len(keys_versions_read)):
         keys_versions.append(
             interface_pb2.KeyRequest(key=keys_versions_read[i][0], ver=keys_versions_read[i][1])
@@ -315,13 +303,18 @@ def menu() -> None:
 
             case '5':  # [GetAll]
                 keys_versions_read = []
+
                 while True:
                     key_read = input('Enter the key you want to fetch: ')
+
                     if key_read == '':
                         break
+
                     version_read = input(f'Enter the version for the key ({key_read}) you want to fetch: ')
+
                     version_read = check_number(version_read)
                     keys_versions_read.append((key_read, version_read))
+
                 get_all(port, keys_versions_read)
 
             case '6':  # [Delete]
