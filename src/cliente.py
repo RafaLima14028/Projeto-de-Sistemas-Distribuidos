@@ -80,7 +80,7 @@ def get(port: int, key: str, version: int) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def get_range(port: int, from_key: str, to_key: str, from_version: int, to_version: int):
+def get_range(port: int, from_key: str, to_key: str, from_version: int, to_version: int) -> None:
     with grpc.insecure_channel(f'localhost:{port}') as channel:
         stub = interface_pb2_grpc.KeyValueStoreStub(channel)
 
@@ -257,7 +257,7 @@ def menu_options() -> None:
     print()
 
 
-def menu() -> None:
+def menu(port: int) -> None:
     while True:
         menu_options()
         option = input('Please enter a valid option: ')
@@ -266,6 +266,7 @@ def menu() -> None:
             case '1':  # [Put]
                 key_read = input('Enter key to insert/update: ')
                 value_read = input('Enter the value for the key: ')
+
                 put(port, key_read, value_read)
 
             case '2':  # [PutAll]
@@ -274,11 +275,14 @@ def menu() -> None:
                     key_read = input('Enter key to insert/update: ')
                     if key_read == '':
                         break
+
                     value_read = input('Enter the value for the key: ')
                     if value_read == '':
                         print('Invalid value\n')
                         continue
+
                     key_value_read.append((key_read, value_read))
+
                 put_all(port, key_value_read)
 
             case '3':  # [Get]
@@ -290,21 +294,28 @@ def menu() -> None:
 
             case '4':  # [GetRange]
                 from_key_read = input('Type the initial key that you want to query: ')
+
                 print('If you want the latest version, dont put any version')
                 from_version_read = input('Enter initial version to search: ')
+
                 print()
                 to_key_read = input('Type the end key that you want to query: ')
+
                 print('If you want the latest version, dont put any version')
                 to_version_read = input('Enter end version to search: ')
+
                 print()
+
                 from_version_read = check_number(from_version_read)
                 to_version_read = check_number(to_version_read)
+
                 get_range(port, from_key_read, to_key_read, from_version_read, to_version_read)
 
             case '5':  # [GetAll]
                 keys_versions_read = []
 
                 while True:
+                    print()
                     key_read = input('Enter the key you want to fetch: ')
 
                     if key_read == '':
@@ -319,24 +330,31 @@ def menu() -> None:
 
             case '6':  # [Delete]
                 key_read = input('Enter the key you want to remove: ')
+
                 delete(port, key_read)
 
             case '7':  # [DeleteRange]
                 from_key_read = input('Enter the initial key you want to remove: ')
                 end_key_read = input('Enter the end key you want to remove: ')
+
                 delete_range(port, from_key_read, end_key_read)
 
             case '8':  # [DeleteAll]
                 keys_read = []
+
                 while True:
                     key_read = input('Input key to delete: ')
+
                     if key_read == '':
                         break
+
                     keys_read.append(key_read)
+
                 delete_all(port, keys_read)
 
             case '9':  # [Trim]
                 key_read = input('Enter the key you want to remove: ')
+
                 trim(port, key_read)
 
             case _:
@@ -349,4 +367,4 @@ if __name__ == '__main__':
     except Exception as e:
         port = 50051
 
-    menu()
+    menu(port)

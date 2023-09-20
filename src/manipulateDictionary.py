@@ -67,19 +67,19 @@ class ManipulateDictionary:
         values_in_range = dict()
 
         if start_version > 0 and end_version > 0:
-            if start_version > end_version:
-                start_version, end_version = end_version, start_version
+            # if start_version > end_version:
+            #     start_version, end_version = end_version, start_version
 
-                max_requested_version = max(start_version, end_version)
+            max_requested_version = max(start_version, end_version)
 
-                for key, values in self.__dictionary.items():
-                    if start_key <= key <= end_key:
-                        for version, value in values:
-                            if version <= max_requested_version:
-                                if key in values_in_range:
-                                    values_in_range[key].append((version, value))
-                                else:
-                                    values_in_range[key] = [(version, value)]
+            for key, values in self.__dictionary.items():
+                if start_key <= key <= end_key:
+                    for version, value in values:
+                        if version <= max_requested_version:
+                            if key in values_in_range:
+                                values_in_range[key].append((version, value))
+                            else:
+                                values_in_range[key] = [(version, value)]
         else:
             for k in list(self.__dictionary.keys()):
                 if start_key <= k <= end_key:

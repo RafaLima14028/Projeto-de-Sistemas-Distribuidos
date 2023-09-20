@@ -17,6 +17,6 @@ def check_string(text: str) -> bool:
     pattern = r"^(?!\s*$)(?!.*[,])"
 
     if re.match(pattern, text):
-        return True
-    else:
         return False
+    else:
+        return True  # There is an error

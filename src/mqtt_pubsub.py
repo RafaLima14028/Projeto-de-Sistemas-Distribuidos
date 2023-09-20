@@ -52,9 +52,6 @@ class mqttClient(mqtt.Client):
 def pub_insert(key: str, value: str, version: int) -> None:
     try:
         publish.single(topic=MQTT_TOPIC + '/insert',
-                       # payload='{ "key": ' + str(key) +
-                       #         ', "version": ' + str(version) +
-                       #         ', "value": ' + str(value) + ' }',
                        payload=str(key) + ',' + str(version) + ',' + str(value),
                        qos=MQTT_QOS)
     except Exception as e:
