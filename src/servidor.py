@@ -48,7 +48,12 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         to_key = request.to.key
         to_version = request.to.ver
 
-        if check_string(from_key) and check_string(to_key):
+        if check_string(from_key):
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('You entered some wrong value')
+            raise grpc.RpcError
+
+        if check_string(to_key):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
@@ -108,7 +113,12 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         key = request.key
         value = request.val
 
-        if check_string(key) and check_string(value):
+        if check_string(key):
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('You entered some wrong value')
+            raise grpc.RpcError
+
+        if check_string(value):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
@@ -150,7 +160,12 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             key = request.key
             value = request.val
 
-            if check_string(key) and check_string(value):
+            if check_string(key):
+                context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+                context.set_details('You entered some wrong value')
+                raise grpc.RpcError
+
+            if check_string(value):
                 context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
                 context.set_details('You entered some wrong value')
                 raise grpc.RpcError
@@ -224,7 +239,12 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         from_key = request.fr.key
         to_key = request.to.key
 
-        if check_string(from_key) and check_string(to_key):
+        if check_string(from_key):
+            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
+            context.set_details('You entered some wrong value')
+            raise grpc.RpcError
+
+        if check_string(to_key):
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details('You entered some wrong value')
             raise grpc.RpcError

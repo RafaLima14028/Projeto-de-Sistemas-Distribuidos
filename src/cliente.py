@@ -367,4 +367,6 @@ if __name__ == '__main__':
     except Exception as e:
         port = 50051
 
+    print(f'Client is using the port {port}...')
+
     menu(port)
