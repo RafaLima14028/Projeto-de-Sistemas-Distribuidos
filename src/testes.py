@@ -1,7 +1,20 @@
 import threading
+from time import sleep
 
 import cliente
 import servidor
+
+
+def print_conteudo():
+    sleep(1)
+    print("\n==========================================\nConteúdo de todos os servidores:")
+    print("==========================================\nServidor 50051")
+    cliente.get_range(50051, 'teste1', 'teste99', 0, 0)
+    print("==========================================\nServidor 50052")
+    cliente.get_range(50052, 'teste1', 'teste99', 0, 0)
+    print("==========================================\nServidor 50053")
+    cliente.get_range(50053, 'teste1', 'teste99', 0, 0)
+
 
 server1_thread = threading.Thread(target=servidor.serve, args=(50051,))
 server2_thread = threading.Thread(target=servidor.serve, args=(50052,))
@@ -11,35 +24,35 @@ server1_thread.start()
 server2_thread.start()
 server3_thread.start()
 
+print("Testes iniciados")
+
 cliente.put(50051, 'teste1', 'valor1')
 cliente.put(50051, 'teste2', 'valor1')
 cliente.put(50051, 'teste3', 'valor1')
-# cliente.get_all(50053, [('teste1', 0), ('teste4', 0), ('teste5', 0)])
 
+sleep(1)
 cliente.put_all(50052, [('teste1', 'valor2'), ('teste4', 'valor1'), ('teste5', 'valor1'), ('teste2', 'valor2')])
-# cliente.get_all(50051, [('teste1', 0), ('teste4', 0), ('teste5', 0), ('teste2', 0)])
-# cliente.get(50053, 'teste2', 0)
-
 cliente.delete(50052, 'teste3')
-# cliente.get_range(50053, 'teste1', 'teste4', 0, 0)
+print_conteudo()
 
-cliente.trim(50052, 'teste1')
-# cliente.get(50051, 'teste1', 0)
+sleep(1)
+cliente.trim(50053, 'teste1')
 
+sleep(1)
 cliente.delete_range(50051, 'teste1', 'teste4')
-# cliente.get_range(50053, 'teste1', 'teste4', 0, 0)
+print_conteudo()
 
-cliente.put(50052, 'teste6', 'valor1')
+sleep(1)
+cliente.put(50052, 'teste,6', 'valor1')     # vírgula em 'teste,6' será removida pelo servidor
+cliente.put(50052, '', 'valor1')            # não deve inserir
+cliente.put(50052, 'teste0', '')            # não deve inserir
+print_conteudo()
+
+cliente.get(50051, 'teste-99', 0)  # não vai encontrar, chave inexistente
+
+sleep(1)
 cliente.delete_all(50053, ['teste5', 'teste6', 'teste7'])
-# cliente.get_range(50053, 'teste5', 'teste7', 0, 0)
-
-print("\nFinal - conteúdo de todos os servidores:\n")
-print("==========================================\nServidor 50051")
-cliente.get_range(50051, 'teste1', 'teste7', 0, 0)
-print("==========================================\nServidor 50052")
-cliente.get_range(50052, 'teste1', 'teste7', 0, 0)
-print("==========================================\nServidor 50053")
-cliente.get_range(50053, 'teste1', 'teste7', 0, 0)
+print_conteudo()
 
 print("Testes concluídos")
 
