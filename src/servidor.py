@@ -251,15 +251,16 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         dict_range = self.dictionary.delRange(from_key, to_key)
 
+        for key, _ in dict_range.items():
+            try:
+                mqtt_pubsub.pub_delete(key)
+            except Exception as e:
+                context.set_code('Internal error')
+                context.set_details('Problem with cross-server operation')
+                raise grpc.RpcError
+
         try:
             for key, values in dict_range.items():
-                try:
-                    mqtt_pubsub.pub_delete(key)
-                except Exception as e:
-                    context.set_code('Internal error')
-                    context.set_details('Problem with cross-server operation')
-                    raise grpc.RpcError
-
                 for version, value in values:
                     response = interface_pb2.KeyValueVersionReply(
                         key=key,
