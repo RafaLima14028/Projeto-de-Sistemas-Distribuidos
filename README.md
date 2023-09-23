@@ -79,4 +79,4 @@ mosquitto -v
 
 ### Link para o vídeo
 
-TODO: Colocar o link
+[Parte 1 do Projeto](https://youtu.be/9ZDFBH2iPKQ)
