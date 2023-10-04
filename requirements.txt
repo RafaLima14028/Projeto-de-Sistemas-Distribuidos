@@ -1,3 +1,4 @@
 grpcio
 grpcio-tools
-paho-mqtt
+paho-mqtt~=1.6.1
+lmdb~=1.4.1
