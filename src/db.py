@@ -1,11 +1,13 @@
+import pickle
+
 import lmdb
 import os
 import struct
-from time import time
+from time import time, sleep
 
 
 class Database:
-    def __init__(self, db_path):
+    def __init__(self, db_path: str):
         self.db_path = db_path
         os.makedirs(self.db_path, exist_ok=True)
 
@@ -14,68 +16,97 @@ class Database:
         except lmdb.Error as e:
             raise Exception(f'A database creation/opening failure occurred: {str(e)}')
 
-    def put(self, key: str, value: str) -> None:
+    def put(self, key: str, value: str) -> (str, str, int, int):
+        _, old_value_bytes, old_version = self.get(key)
+
         key_bytes = key.encode('utf-8')
         value_bytes = value.encode('utf-8')
 
-        version = int(time())
-        version_bytes = struct.pack('>Q', version)
+        new_version = int(time())
+        new_version_bytes = struct.pack('>Q', new_version)
 
         with self.env.begin(write=True) as txn:
             try:
-                txn.put(key_bytes, value_bytes + version_bytes)
+                cursor = txn.cursor()
+                cursor.get(key_bytes, default=None)
+                existing_values = cursor.value()
+
+                if existing_values:
+                    existing_values = pickle.loads(existing_values)
+                else:
+                    existing_values = []
+
+                existing_values.append((new_version_bytes, value_bytes))
+                txn.put(key_bytes, pickle.dumps(existing_values))
             except lmdb.Error as e:
                 raise Exception(f'A database insertion failure occurred: {str(e)}')
 
-    def get(self, key: str, version: int = -1) -> (str, str, int):
-        if version > 0:
-            key_bytes = key.encode('utf-8')
-            version_bytes = struct.pack('>Q', version)
+        return key, old_value_bytes, old_version, new_version
 
-            with self.env.begin() as txn:
-                try:
-                    value_with_version = txn.get(key_bytes + version_bytes)
-                except lmdb.Error as e:
-                    raise Exception(f'Got failed in the database: {str(e)}')
-
-            if value_with_version is None:
-                return None, None, None
-
-            value_bytes = value_with_version[:-8].decode('utf-8')
-            version = struct.unpack('>Q', value_with_version[-8:])[0]
-        else:
-            key_bytes = key.encode('utf-8')
-
-            with self.env.begin() as txn:
-                try:
-                    value_without_version = txn.get(key_bytes)
-                except lmdb.Error as e:
-                    raise Exception(f'Got failed in the database: {str(e)}')
-
-            if value_without_version is None:
-                return None, None, None
-
-            value_bytes = value_without_version[:-8].decode('utf-8')
-            version = struct.unpack('>Q', value_without_version[-8:])[0]
-
-        return key, value_bytes, version
-
-    def delete(self, key: str):
+    def get_all_values_key(self, key: str) -> [(str, int)]:
         key_bytes = key.encode('utf-8')
+        values = []
+
+        with self.env.begin() as txn:
+            try:
+                cursor = txn.cursor()
+                cursor.get(key_bytes, default=None)
+                existing_values = cursor.value()
+
+                if existing_values:
+                    existing_values = pickle.loads(existing_values)
+
+                    for version_bytes, value_bytes in existing_values:
+                        version = struct.unpack('>Q', version_bytes)[0]
+                        values.append((value_bytes.decode('utf-8'), version))
+            except lmdb.Error as e:
+                raise Exception(f'Failed to fetch data from the database: {str(e)}')
+
+        return values
+
+    def get(self, key: str, version: int = -1) -> (str, str, int):
+        values = self.get_all_values_key(key)
+
+        if values == []:
+            return '', '', -1
+
+        max_tuple = (None, None, None)
+
+        if version > 0:
+            max_version = -1
+
+            for t in values:
+                value_tuple = t[0]
+                version_tuple = t[1]
+
+                if version_tuple <= version and version_tuple > max_version:
+                    max_version = version_tuple
+                    max_tuple = (key, value_tuple, version_tuple)
+        else:
+            max_version = -1
+
+            for t in values:
+                value_tuple = t[0]
+                version_tuple = t[1]
+
+                if version_tuple > max_version:
+                    max_version = version_tuple
+                    max_tuple = (key, value_tuple, version_tuple)
+
+        return max_tuple
+
+    def delete(self, key: str) -> (str, str, int):
+        key_bytes = key.encode('utf-8')
+
+        _, last_value, last_version = self.get(key)
 
         with self.env.begin(write=True) as txn:
             try:
-                old_value = txn.pop(key_bytes, default=None)
+                txn.delete(key_bytes)
             except lmdb.Error as e:
                 raise Exception(f'Database deletion failed: {str(e)}')
 
-        if old_value is None:
-            return None
-        else:
-            value_bytes = old_value[:-8].decode('utf-8')
-            version = struct.unpack('>Q', old_value[-8:])[0]
-
-            return value_bytes, version
+        return key, last_value, last_version
 
     def range_scan(self, from_key: str, to_key: str, from_version: int, to_version: int):
         from_key_bytes = from_key.encode('utf-8')
@@ -98,31 +129,33 @@ class Database:
 
         return result
 
-    def trim(self, key: str):
+    def trim(self, key: str) -> (str, str, int):
         key_bytes = key.encode('utf-8')
 
-        with self.env.begin() as txn:
-            cursor = txn.cursor()
-            last_version = 0
+        _, last_value, last_version = self.delete(key)
 
-            for key, value in cursor.iternext(keys=True, values=True):
-                if key == key_bytes:
-                    version = struct.unpack('>Q', value[-8:])[0]
+        value_bytes = last_value.encode('utf-8')
 
-                    if version > last_version:
-                        last_version = version
-                        last_value = value[:-8].decode('utf-8')
+        new_version = last_version
+        new_version_bytes = struct.pack('>Q', new_version)
 
-            # Delete all versions older than the last one
-            cursor = txn.cursor()
-            for key, value in cursor.iternext(keys=True, values=True):
-                if key == key_bytes:
-                    version = struct.unpack('>Q', value[-8:])[0]
+        with self.env.begin(write=True) as txn:
+            try:
+                cursor = txn.cursor()
+                cursor.get(key_bytes, default=None)
+                existing_values = cursor.value()
 
-                    if version < last_version:
-                        txn.delete(key)
+                if existing_values:
+                    existing_values = pickle.loads(existing_values)
+                else:
+                    existing_values = []
 
-        return last_value, last_version
+                existing_values.append((new_version_bytes, value_bytes))
+                txn.put(key_bytes, pickle.dumps(existing_values))
+            except lmdb.Error as e:
+                raise Exception(f'A database insertion failure occurred: {str(e)}')
+
+        return key, last_value, new_version
 
     def close(self):
         self.env.close()
@@ -130,8 +163,19 @@ class Database:
 
 if __name__ == '__main__':
     db = Database('my_db')
-    db.put('key1', 'value1')
 
-    key, value, version = db.get('key1')
+    # print(db.put('key1', 'value1'))
+    # sleep(5)
+    # print(db.put('key1', 'value2'))
+    # sleep(5)
+    # print(db.put('key1', 'value3'))
+    # sleep(5)
+    # print(db.put('key1', 'value4'))
+    # sleep(5)
+    # print(db.put('key1', 'value5'))
+    # sleep(5)
+    # print(db.put('key1', 'value6'))
 
-    print(f'Key: {key}, Value: {value}, Version: {version}')
+    print(db.get_all_values_key('key2'))
+    # print(db.trim('key1'))
+    # print(db.get_all_values_key('key1'))

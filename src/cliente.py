@@ -28,6 +28,7 @@ def put(port: int, key: str, value: str) -> None:
 
 def put_all(port: int, keys_values_read: []) -> None:
     keys_values = []
+
     for i in range(0, len(keys_values_read)):
         keys_values.append(
             interface_pb2.KeyValueRequest(key=keys_values_read[i][0], val=keys_values_read[i][1])
