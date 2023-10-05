@@ -1,18 +1,22 @@
 import sys
-import threading
 from concurrent import futures
 import grpc
-import interface_pb2  # Import the generated protobuf Python code
-import interface_pb2_grpc  # Import the generated gRPC stubs
-import mqtt_pubsub
-from manipulateDictionary import ManipulateDictionary
-from utils import check_string
+import re
+
+from src.interface import interface_pb2, interface_pb2_grpc
 from db import Database
 
 
-class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
-    # dictionary = None
+def check_string(text: str) -> bool:
+    pattern = r"^(?!\s*$)(?!.*[,])"
 
+    if re.match(pattern, text):
+        return False
+    else:
+        return True  # There is an error
+
+
+class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
     def __init__(self):
         self.database = Database('my_db')
         # self.dictionary = ManipulateDictionary()
@@ -131,13 +135,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         key_returned, old_value_returned, old_version_returned, new_version_returned = \
             self.database.put(key, value)
 
-        # try:
-        #     mqtt_pubsub.pub_insert(key, value, new_version_returned)
-        # except Exception as e:
-        #     context.set_code('Internal error')
-        #     context.set_details('Problem with cross-server operation')
-        #     raise grpc.RpcError
-
         try:
             return interface_pb2.PutReply(
                 key=key_returned,
@@ -175,13 +172,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
                 key_returned, old_value_returned, old_version_returned, new_version_returned = \
                     self.dictionary.insertAndUpdate(key, value)
 
-                # try:
-                #     mqtt_pubsub.pub_insert(key, value, new_version_returned)
-                # except Exception as e:
-                #     context.set_code('Internal error')
-                #     context.set_details('Problem with cross-server operation')
-                #     raise grpc.RpcError
-
                 response.append(
                     interface_pb2.PutReply(
                         key=key_returned,
@@ -207,14 +197,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         # key_returned, last_value, last_version = self.dictionary.delete(key)
         key_returned, last_value, last_version = self.database.delete(key)
-
-        # if key_returned != '':
-        #     try:
-        #         mqtt_pubsub.pub_delete(key)
-        #     except Exception as e:
-        #         context.set_code('Internal error')
-        #         context.set_details('Problem with cross-server operation')
-        #         raise grpc.RpcError
 
         try:
             return interface_pb2.KeyValueVersionReply(
@@ -242,14 +224,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
         dict_range = self.dictionary.delRange(from_key, to_key)
-
-        # for key, _ in dict_range.items():
-            # try:
-            #     mqtt_pubsub.pub_delete(key)
-            # except Exception as e:
-            #     context.set_code('Internal error')
-            #     context.set_details('Problem with cross-server operation')
-            #     raise grpc.RpcError
 
         try:
             for key, values in dict_range.items():
@@ -283,14 +257,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             for key in keys:
                 key_returned, value_returned, version_returned = self.dictionary.delAll(key)
 
-                # if key_returned != '':
-                #     try:
-                #         mqtt_pubsub.pub_delete(key)
-                #     except Exception as e:
-                #         context.set_code('Internal error')
-                #         context.set_details('Problem with cross-server operation')
-                #         raise grpc.RpcError
-
                 response = interface_pb2.KeyValueVersionReply(
                     key=key_returned,
                     val=value_returned,
@@ -314,14 +280,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         # key_returned, last_value, last_version = self.dictionary.trim(key)
         key_returned, last_value, last_version = self.database.trim(key)
 
-        # if key_returned != '':
-        #     try:
-        #         mqtt_pubsub.pub_trim(key)
-        #     except Exception as e:
-        #         context.set_code('Internal error')
-        #         context.set_details('Problem with cross-server operation')
-        #         raise grpc.RpcError
-
         try:
             return interface_pb2.KeyValueVersionReply(
                 key=key_returned,
@@ -332,25 +290,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_code(e.code())
             context.set_details(str(e.details()))
             raise grpc.RpcError
-
-
-# def sync_queue(class_work: KeyValueStoreServicer) -> None:
-#     while True:
-#         msg_q = mqtt_pubsub.get_queue()
-#
-#         while not msg_q.empty():
-#             msg = str(msg_q.get())
-#
-#             msg = msg.split(',')
-#
-#             topic = msg[0]
-#
-#             if topic == 'projeto-sd/insert':
-#                 class_work.dictionary.insertAndUpdateMQTT(msg[1], msg[3], int(msg[2]))
-#             elif topic == 'projeto-sd/delete':
-#                 class_work.dictionary.delete(msg[1])
-#             elif topic == 'projeto-sd/trim':
-#                 class_work.dictionary.trim(msg[1])
 
 
 def serve(port: int) -> None:
@@ -367,16 +306,6 @@ def serve(port: int) -> None:
 
     print('Server listening on port ' + str(port) + '...')
 
-    # mqttc = mqtt_pubsub.mqttClient()
-    #
-    # thread_mqtt = threading.Thread(target=sync_queue, args=(class_work,))
-    # thread_mqtt.start()
-    #
-    # rc = mqttc.run()
-    #
-    # print("rc: " + str(rc))
-    #
-    # thread_mqtt.join()
     server.wait_for_termination()
 
 

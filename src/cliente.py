@@ -1,8 +1,17 @@
 import sys
 import grpc
-import interface_pb2  # Import the generated protobuf Python code
-import interface_pb2_grpc  # Import the generated gRPC stubs
-from utils import check_number
+from src.interface import interface_pb2, interface_pb2_grpc
+
+def check_number(number: str) -> int:
+    if number != '':
+        try:
+            number = int(number)
+        except ValueError:
+            number = -1
+    else:
+        number = -1
+
+    return number
 
 
 def put(port: int, key: str, value: str) -> None:
@@ -190,6 +199,7 @@ def delete_range(port: int, from_key: str, to_key: str) -> None:
 
 def delete_all(port: int, keys_read: []) -> None:
     keys = []
+
     for i in range(0, len(keys_read)):
         keys.append(
             interface_pb2.KeyValueRequest(key=keys_read[i])

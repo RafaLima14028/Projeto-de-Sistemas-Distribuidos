@@ -2,3 +2,4 @@ grpcio
 grpcio-tools
 paho-mqtt~=1.6.1
 lmdb~=1.4.1
+pysyncobj~=0.3.12
