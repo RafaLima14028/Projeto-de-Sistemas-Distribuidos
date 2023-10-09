@@ -2,10 +2,10 @@ import sys
 from concurrent import futures
 import grpc
 import re
+import socket
 
-from src.interface import interface_pb2, interface_pb2_grpc
-from db import Database
-
+# from src.interface import interface_pb2, interface_pb2_grpc
+import interface_pb2_grpc, interface_pb2
 
 def check_string(text: str) -> bool:
     pattern = r"^(?!\s*$)(?!.*[,])"
@@ -18,7 +18,8 @@ def check_string(text: str) -> bool:
 
 class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
     def __init__(self):
-        self.database = Database('my_db')
+        self.skt = socket.socket()
+        self.skt.connect(('localhost', 30020))
         # self.dictionary = ManipulateDictionary()
 
     def Get(self, request, context):
@@ -34,7 +35,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         #     self.dictionary.getByKeyVersion(key=key, version=version)
         # )
 
-        key_returned, value_returned, version_returned = self.database.get(key, version)
+
 
         try:
             return interface_pb2.KeyValueVersionReply(

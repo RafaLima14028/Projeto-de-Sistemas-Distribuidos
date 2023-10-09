@@ -6,10 +6,8 @@ from time import time
 
 
 class Database(SyncObj):
-    # def __init__(self, selfNodeAddr: str, partnerNodeAddrs: list[str]):
     def __init__(self, port, primary, secundary):
         super(Database, self).__init__(primary, secundary)
-
         self.path_database = f'my_db/{port}/'
 
     def put(self, key: str, value: str) -> (str, str, int, int):

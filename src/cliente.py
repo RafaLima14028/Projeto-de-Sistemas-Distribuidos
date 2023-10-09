@@ -1,6 +1,7 @@
 import sys
 import grpc
-from src.interface import interface_pb2, interface_pb2_grpc
+from src import interface_pb2_grpc, interface_pb2
+
 
 def check_number(number: str) -> int:
     if number != '':
