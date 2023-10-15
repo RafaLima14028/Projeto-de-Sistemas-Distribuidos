@@ -1,18 +1,9 @@
 import sys
 import grpc
-from src import interface_pb2_grpc, interface_pb2
 
-
-def check_number(number: str) -> int:
-    if number != '':
-        try:
-            number = int(number)
-        except ValueError:
-            number = -1
-    else:
-        number = -1
-
-    return number
+import project.interface_pb2_grpc as interface_pb2_grpc
+import project.interface_pb2 as interface_pb2
+from utils import check_number
 
 
 def put(port: int, key: str, value: str) -> None:
@@ -36,7 +27,7 @@ def put(port: int, key: str, value: str) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def put_all(port: int, keys_values_read: []) -> None:
+def put_all(port: int, keys_values_read: list) -> None:
     keys_values = []
 
     for i in range(0, len(keys_values_read)):
@@ -116,7 +107,7 @@ def get_range(port: int, from_key: str, to_key: str, from_version: int, to_versi
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def get_all(port: int, keys_versions_read: []) -> None:
+def get_all(port: int, keys_versions_read: list) -> None:
     keys_versions = []
 
     for i in range(0, len(keys_versions_read)):
@@ -198,7 +189,7 @@ def delete_range(port: int, from_key: str, to_key: str) -> None:
                 print(f"Error during gRPC transmission: {e.details()}")
 
 
-def delete_all(port: int, keys_read: []) -> None:
+def delete_all(port: int, keys_read: list) -> None:
     keys = []
 
     for i in range(0, len(keys_read)):
@@ -283,15 +274,20 @@ def menu(port: int) -> None:
 
             case '2':  # [PutAll]
                 key_value_read = []
+
                 while True:
                     key_read = input('Enter key to insert/update: ')
+
                     if key_read == '':
                         break
 
                     value_read = input('Enter the value for the key: ')
+
                     if value_read == '':
                         print('Invalid value\n')
                         continue
+
+                    print()
 
                     key_value_read.append((key_read, value_read))
 
@@ -302,6 +298,7 @@ def menu(port: int) -> None:
                 print('If you want the latest version, dont put any version')
                 version_read = input('Enter version to search: ')
                 version_read = check_number(version_read)
+
                 get(port, key_read, version_read)
 
             case '4':  # [GetRange]

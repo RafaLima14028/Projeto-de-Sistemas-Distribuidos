@@ -1,25 +1,19 @@
 import sys
 from concurrent import futures
 import grpc
-import re
 import socket
+import json
 
-# from src.interface import interface_pb2, interface_pb2_grpc
-import interface_pb2_grpc, interface_pb2
-
-def check_string(text: str) -> bool:
-    pattern = r"^(?!\s*$)(?!.*[,])"
-
-    if re.match(pattern, text):
-        return False
-    else:
-        return True  # There is an error
+import project.interface_pb2_grpc as interface_pb2_grpc
+import project.interface_pb2 as interface_pb2
+from manipulateDictionary import ManipulateDictionary
+from utils import check_string, ENCODING_AND_DECODING_TYPE
 
 
 class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
     def __init__(self):
-        self.skt = socket.socket()
-        self.skt.connect(('localhost', 30020))
+        self.sk = socket.socket()
+        self.sk.connect(('localhost', 30020))
         # self.dictionary = ManipulateDictionary()
 
     def Get(self, request, context):
@@ -31,11 +25,28 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
+        msg = json.dumps(
+            {
+                'function': 'get',
+                'key': key,
+                'value': '',
+                'version': version
+            }
+        )
+
+        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        resp = self.sk.recv(16480)
+        resp = resp.decode(ENCODING_AND_DECODING_TYPE)
+
+        data = json.loads(resp)
+
+        key_returned = data['key']
+        value_returned = data['value_returned']
+        version_returned = data['version_returned']
+
         # key_returned, value_returned, version_returned = (
         #     self.dictionary.getByKeyVersion(key=key, version=version)
         # )
-
-
 
         try:
             return interface_pb2.KeyValueVersionReply(
@@ -65,18 +76,34 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
-        dict_range = self.dictionary.getRangeByKeyVersion(
-            from_key, to_key,
-            from_version, to_version
+        # dict_range = self.dictionary.getRangeByKeyVersion(
+        #     from_key, to_key,
+        #     from_version, to_version
+        # )
+
+        msg = json.dumps(
+            {
+                'function': 'getRange',
+                'start_key': from_key,
+                'end_key': to_key,
+                'start_version': from_version,
+                'end_version': to_version
+            }
         )
 
+        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        resp = self.sk.recv(16480)
+        resp = resp.decode(ENCODING_AND_DECODING_TYPE)
+
+        data = json.loads(resp)
+
         try:
-            for key, values in dict_range.items():
-                for version, value in values:
+            for key, values in data.items():
+                for version_value, value_value in values:
                     response = interface_pb2.KeyValueVersionReply(
                         key=key,
-                        val=value,
-                        ver=version
+                        val=value_value,
+                        ver=version_value
                     )
 
                     yield response
@@ -102,10 +129,29 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key, version in zip(keys, versions):
-                version_returned, value_returned = self.dictionary.getAllInRange(key, version)
+                # version_returned, value_returned = self.dictionary.getAllInRange(key, version)
+
+                msg = json.dumps(
+                    {
+                        'function': 'getAll',
+                        'key': key,
+                        'value': '',
+                        'version': version
+                    }
+                )
+
+                self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+                resp = self.sk.recv(16480)
+                resp = resp.decode(ENCODING_AND_DECODING_TYPE)
+
+                data = json.loads(resp)
+
+                key_returned = data['key']
+                value_returned = data['value_returned']
+                version_returned = data['version_returned']
 
                 response = interface_pb2.KeyValueVersionReply(
-                    key=key,
+                    key=key_returned,
                     val=value_returned,
                     ver=version_returned
                 )
@@ -133,15 +179,32 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         # key_returned, old_value_returned, old_version_returned, new_version_returned = \
         #     self.dictionary.insertAndUpdate(key, value)
 
-        key_returned, old_value_returned, old_version_returned, new_version_returned = \
-            self.database.put(key, value)
+        msg = json.dumps(
+            {
+                'function': 'put',
+                'key': key,
+                'value': value,
+                'version': -1
+            }
+        )
+
+        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        resp = self.sk.recv(16480)
+        resp = resp.decode(ENCODING_AND_DECODING_TYPE)
+
+        data = json.loads(resp)
+
+        key_returned = data['key']
+        old_value = data['old_value']
+        old_version = data['old_version']
+        new_version = data['new_version']
 
         try:
             return interface_pb2.PutReply(
                 key=key_returned,
-                old_val=old_value_returned,
-                old_ver=old_version_returned,
-                ver=new_version_returned
+                old_val=old_value,
+                old_ver=old_version,
+                ver=new_version
             )
         except grpc.RpcError as e:
             context.set_code(e.code())
@@ -170,15 +233,35 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key, value in zip(keys, values):
-                key_returned, old_value_returned, old_version_returned, new_version_returned = \
-                    self.dictionary.insertAndUpdate(key, value)
+                # key_returned, old_value_returned, old_version_returned, new_version_returned = \
+                #     self.dictionary.insertAndUpdate(key, value)
+
+                msg = json.dumps(
+                    {
+                        'function': 'putAll',
+                        'key': key,
+                        'value': value,
+                        'version': -1
+                    }
+                )
+
+                self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+                resp = self.sk.recv(16480)
+                resp = resp.decode(ENCODING_AND_DECODING_TYPE)
+
+                data = json.loads(resp)
+
+                key_returned = data['key']
+                old_value = data['old_value']
+                old_version = data['old_version']
+                new_version = data['new_version']
 
                 response.append(
                     interface_pb2.PutReply(
                         key=key_returned,
-                        old_val=old_value_returned,
-                        old_ver=old_version_returned,
-                        ver=new_version_returned
+                        old_val=old_value,
+                        old_ver=old_version,
+                        ver=new_version
                     )
                 )
 
@@ -197,11 +280,29 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
         # key_returned, last_value, last_version = self.dictionary.delete(key)
-        key_returned, last_value, last_version = self.database.delete(key)
+
+        msg = json.dumps(
+            {
+                'function': 'del',
+                'key': key,
+                'value': '',
+                'version': -1
+            }
+        )
+
+        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        resp = self.sk.recv(16480)
+        resp = resp.decode(ENCODING_AND_DECODING_TYPE)
+
+        data = json.loads(resp)
+
+        key_returned = data['key']
+        last_value = data['last_value']
+        last_version = data['last_version']
 
         try:
             return interface_pb2.KeyValueVersionReply(
-                key=key,
+                key=key_returned,
                 val=last_value,
                 ver=last_version
             )
@@ -224,10 +325,24 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
-        dict_range = self.dictionary.delRange(from_key, to_key)
+        # dict_range = self.dictionary.delRange(from_key, to_key)
+
+        msg = json.dumps(
+            {
+                'function': 'delRange',
+                'start_key': from_key,
+                'end_key': to_key
+            }
+        )
+
+        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        resp = self.sk.recv(16480)
+        resp = resp.decode(ENCODING_AND_DECODING_TYPE)
+
+        data = json.loads(resp)
 
         try:
-            for key, values in dict_range.items():
+            for key, values in data.items():
                 for version, value in values:
                     response = interface_pb2.KeyValueVersionReply(
                         key=key,
@@ -256,7 +371,26 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key in keys:
-                key_returned, value_returned, version_returned = self.dictionary.delAll(key)
+                # key_returned, value_returned, version_returned = self.dictionary.delAll(key)
+
+                msg = json.dumps(
+                    {
+                        'function': 'delAll',
+                        'key': key,
+                        'value': '',
+                        'version': -1
+                    }
+                )
+
+                self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+                resp = self.sk.recv(16480)
+                resp = resp.decode(ENCODING_AND_DECODING_TYPE)
+
+                data = json.loads(resp)
+
+                key_returned = data['key']
+                value_returned = data['last_value']
+                version_returned = data['last_version']
 
                 response = interface_pb2.KeyValueVersionReply(
                     key=key_returned,
@@ -279,13 +413,31 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
         # key_returned, last_value, last_version = self.dictionary.trim(key)
-        key_returned, last_value, last_version = self.database.trim(key)
+
+        msg = json.dumps(
+            {
+                'function': 'trim',
+                'key': key,
+                'value': '',
+                'version': -1
+            }
+        )
+
+        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        resp = self.sk.recv(16480)
+        resp = resp.decode(ENCODING_AND_DECODING_TYPE)
+
+        data = json.loads(resp)
+
+        key_returned = data['key']
+        last_value = data['last_value']
+        new_version = data['new_version']
 
         try:
             return interface_pb2.KeyValueVersionReply(
                 key=key_returned,
                 val=last_value,
-                ver=last_version
+                ver=new_version
             )
         except grpc.RpcError as e:
             context.set_code(e.code())
