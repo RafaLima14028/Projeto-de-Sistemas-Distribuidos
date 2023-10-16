@@ -49,6 +49,8 @@ class Database(SyncObj):
             except lmdb.Error as e:
                 raise Exception(f'A database insertion failure occurred: {str(e)}')
 
+        db.close()
+
         return key, old_value_bytes, old_version, new_version
 
     def get_all_values_key(self, key: str) -> [(str, int)]:
@@ -71,6 +73,8 @@ class Database(SyncObj):
                         values.append((value_bytes.decode(ENCODING_AND_DECODING_TYPE), version))
             except lmdb.Error as e:
                 raise Exception(f'Failed to fetch data from the database: {str(e)}')
+
+        db.close()
 
         return values
 
@@ -141,6 +145,9 @@ class Database(SyncObj):
                                             values_in_range[key] = [(version, value)]
                     except lmdb.Error as e:
                         raise Exception(f'Database get in range failed: {str(e)}')
+
+        db.close()
+
         return values_in_range
 
     def delete(self, key: str) -> (str, str, int):
@@ -155,6 +162,8 @@ class Database(SyncObj):
                 txn.delete(key_bytes)
             except lmdb.Error as e:
                 raise Exception(f'Database delete failed: {str(e)}')
+
+        db.close()
 
         return key, last_value, last_version
 
@@ -181,6 +190,8 @@ class Database(SyncObj):
                         cursor.delete()
             except lmdb.Error as e:
                 raise Exception(f'Database delete in range failed: {str(e)}')
+
+        db.close()
 
         return values_in_range
 
@@ -211,6 +222,8 @@ class Database(SyncObj):
                 txn.put(key_bytes, pickle.dumps(existing_values))
             except lmdb.Error as e:
                 raise Exception(f'A database insertion failure occurred: {str(e)}')
+
+        db.close()
 
         return key, last_value, new_version
 
