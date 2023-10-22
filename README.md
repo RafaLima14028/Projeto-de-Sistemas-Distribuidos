@@ -2,8 +2,8 @@
 
 ### Integrantes
 
-* Rafael Alves de Lima - 12021BCC035
-* Mateus Rocha Resende - 11921BCC027
+* Rafael Alves de Lima - 12021BCC035 ([@RafaLima14028](https://github.com/RafaLima14028/))
+* Mateus Rocha Resende - 11921BCC027 ([@matrocheetos](https://github.com/matrocheetos))
 
 ### Métodos implementados
 

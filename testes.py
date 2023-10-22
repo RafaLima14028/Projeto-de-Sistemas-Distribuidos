@@ -1,8 +1,8 @@
 import threading
 from time import sleep
 
-import cliente
-import servidor
+import src.cliente as cliente
+import src.servidor as servidor
 
 
 def print_conteudo():
@@ -43,9 +43,9 @@ cliente.delete_range(50051, 'teste1', 'teste4')
 print_conteudo()
 
 sleep(3)
-cliente.put(50052, 'teste,6', 'valor1')     # vírgula em 'teste,6' será removida pelo servidor
-cliente.put(50052, '', 'valor1')            # não deve inserir
-cliente.put(50052, 'teste0', '')            # não deve inserir
+cliente.put(50052, 'teste,6', 'valor1')  # vírgula em 'teste,6' será removida pelo servidor
+cliente.put(50052, '', 'valor1')  # não deve inserir
+cliente.put(50052, 'teste0', '')  # não deve inserir
 print_conteudo()
 
 cliente.get(50051, 'teste-99', 0)  # não vai encontrar, chave inexistente
