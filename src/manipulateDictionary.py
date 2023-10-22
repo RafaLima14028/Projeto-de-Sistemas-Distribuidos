@@ -17,6 +17,16 @@ class ManipulateDictionary:
         else:
             return False
 
+    def __searchLastTime(self, key: str, value: str) -> bool:
+        for v, last_time in self.__dictionary[key]:
+            if value == v[1]:
+                if self.__checkForUpdate(last_time):
+                    return True
+                else:
+                    return False
+
+        return False
+
     def __updateCache(self, key: str, value: str, version: int):
         if value == '' and version <= 0:
             del self.__dictionary[key]
@@ -31,9 +41,7 @@ class ManipulateDictionary:
     def __checkKeyCleanliness(self, key: str, value: str) -> None:
         for v, last_time in self.__dictionary[key]:
             if value == v[1]:
-                if self.__checkForUpdate(last_time):
-                    self.__updateCache(key, '', -1)  # Cleans wrench
-
+                self.__updateCache(key, '', -1)  # Cleans wrench
                 break
 
     def insertAndUpdate(self, key: str, value: str) -> (str, str, int, int):
@@ -42,22 +50,26 @@ class ManipulateDictionary:
         )
 
         if key in self.__dictionary:
-            _, old_value, old_version = self.getByKeyVersion(key)
-            self.__checkKeyCleanliness(key, old_value)
+            key_cache_returned, old_value, old_version = self.getByKeyVersion(key)
 
-            self.__dictionary[key].append(
-                ((new_version_returned, value), int(time()))
-            )  # key: [((version, value), time_insert_in_cache)]
+            if self.__searchLastTime(key, old_value):
+                self.__checkKeyCleanliness(key, old_value)
 
-            return key, old_version_returned, old_value_returned, new_version_returned
+                self.__dictionary[key].append(
+                    ((new_version_returned, value), int(time()))
+                )  # key: [((version, value), time_insert_in_cache)]
+
+                return key_returned, old_value_returned, old_version_returned, new_version_returned
+            else:
+                return key_cache_returned, old_value, old_version, new_version_returned
         else:
             self.__dictionary[key] = [
                 ((new_version_returned, value), int(time()))
             ]  # key: [((version, value), time_insert_in_cache)]
 
-            return key, old_value_returned, old_version_returned, new_version_returned
+            return key_returned, old_value_returned, old_version_returned, new_version_returned
 
-    def getByKeyVersion(self, key: str, version: float = -1) -> (str, str, float):
+    def getByKeyVersion(self, key: str, version: int = -1) -> (str, str, int):
         valueSeach = ''
         versionSeach = -1
         lastUpdateData = -1
@@ -83,32 +95,16 @@ class ManipulateDictionary:
                             valueSeach = v0[1]
                             lastUpdateData = v1
 
-        if valueSeach == '' and versionSeach <= 0:
-            key_returned, value_returned, version_returned = self.__handlesJson.Get(key, version)
-
-            if key_returned == '' and value_returned == '' and version_returned <= 0:  # Not exists in db
+        if not self.__checkForUpdate(lastUpdateData):  # The data is still valid
+            if valueSeach == '' and versionSeach <= 0:
                 return '', '', -1
             else:
-                self.__updateCache(key_returned, value_returned, version_returned)
-
-                return key_returned, value_returned, version_returned
-        else:
-            if self.__checkForUpdate(lastUpdateData):
-                # TODO: Updates the requested data to the cache
-                key_returned, value_returned, version_returned = self.__handlesJson.Get(key, version)
-
-                if key_returned == '' and value_returned == '' and version_returned <= 0:  # Not exists in db
-                    self.__updateCache(key, '', -1)
-                    return '', '', -1
-                else:
-                    if key == key_returned and valueSeach == value_returned \
-                            and versionSeach == version_returned:
-                        return key_returned, value_returned, version_returned
-                    else:
-                        self.__updateCache(key_returned, value_returned, version_returned)
-                        return key_returned, value_returned, version_returned
-            else:
                 return key, valueSeach, versionSeach
+        else:  # Data needs to be updated
+            key_returned, value_returned, version_returned = self.__handlesJson.Get(key, version)
+            self.__updateCache(key_returned, value_returned, version_returned)
+
+            return key, valueSeach, versionSeach
 
     def getRangeByKeyVersion(self, start_key: str, end_key: str, start_version: float = -1,
                              end_version: float = -1) -> dict:
@@ -150,6 +146,8 @@ class ManipulateDictionary:
 
     # Remove todos os valores associados à chave, exceto a versão mais recente, e retorna valor e versão para a chave
     def trim(self, key: str) -> (str, str, int):
+        # key_returned, last_value, new_version = self.__handlesJson.Trim(key)
+
         if key in self.__dictionary:
             _, last_value, last_version = self.getByKeyVersion(key)
 
@@ -165,13 +163,13 @@ class ManipulateDictionary:
 
     def delete(self, key: str) -> (str, str, int):
         if key in self.__dictionary:
-            _, last_value, last_version = self.getByKeyVersion(key)
+            key_cache_returned, value_cache_returned, verion_cache_returned = self.getByKeyVersion(key)
 
             del self.__dictionary[key]
 
-            return key, last_value, last_version
-        else:
-            return '', '', -1
+        self.__handlesJson.Del(key)
+
+        return key_cache_returned, value_cache_returned, verion_cache_returned
 
     def delRange(self, start_key: str, end_key: str) -> dict:
         values_in_range = dict()
@@ -215,8 +213,11 @@ if __name__ == '__main__':
     print()
     print(d.insertAndUpdate('Carolina', 'Carla'))
     print()
+    sleep(3)
     print(d.insertAndUpdate('Rafael', 'Carlos2'))
     print()
+    print(d.getByKeyVersion('Rafael'))
+    sleep(62)
     print(d.getByKeyVersion('Rafael'))
 
     # print(d.getByKeyVersion('Rafael'))

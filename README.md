@@ -21,6 +21,20 @@
 
 - [x] insertAndUpdate
 - [x] getByKeyVersion
+- [x] delete
+
+### Regras para atualizar o cache (*temporário*)
+
+- **Put**: Verificar se o cache está dentro de um tempo válido, senão atualiza do db.
+Se o dado já existe, retorna do cache.
+- **Get**: Verifica se existe ou não no cache os dados. 
+Se os dados existem, verifica se está no tempo válido e retorna, senão atualiza o 
+cache e retorna.
+Se os dados não existirem, verifica se está no tempo válido e retorna, senão
+atualiza o cache e retorna.
+- **Del**: Busca a chave no cache usando a função Get e 
+executa a operação de excluir todas as chaves do cache e depois executa no
+banco de dados também.
 
 ### Requisitos
 

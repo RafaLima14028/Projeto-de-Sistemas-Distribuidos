@@ -84,7 +84,7 @@ class Database(SyncObj):
         if not values:
             return '', '', -1
 
-        max_tuple = (None, None, None)
+        max_tuple = ('', '', -1)
 
         if version > 0:
             max_version = -1
