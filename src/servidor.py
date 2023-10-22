@@ -4,17 +4,15 @@ import grpc
 import socket
 import json
 
-import project.interface_pb2_grpc as interface_pb2_grpc
-import project.interface_pb2 as interface_pb2
+import interface_pb2_grpc
+import interface_pb2
 from manipulateDictionary import ManipulateDictionary
 from utils import check_string, ENCODING_AND_DECODING_TYPE
 
 
 class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
     def __init__(self):
-        self.sk = socket.socket()
-        self.sk.connect(('localhost', 30020))
-        # self.dictionary = ManipulateDictionary()
+        self.cache = ManipulateDictionary()
 
     def Get(self, request, context):
         key = request.key
@@ -25,28 +23,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
-        msg = json.dumps(
-            {
-                'function': 'get',
-                'key': key,
-                'value': '',
-                'version': version
-            }
+        key_returned, value_returned, version_returned = (
+            self.dictionary.getByKeyVersion(key=key, version=version)
         )
-
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
-        resp = resp.decode(ENCODING_AND_DECODING_TYPE)
-
-        data = json.loads(resp)
-
-        key_returned = data['key']
-        value_returned = data['value_returned']
-        version_returned = data['version_returned']
-
-        # key_returned, value_returned, version_returned = (
-        #     self.dictionary.getByKeyVersion(key=key, version=version)
-        # )
 
         try:
             return interface_pb2.KeyValueVersionReply(
@@ -178,26 +157,6 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         # key_returned, old_value_returned, old_version_returned, new_version_returned = \
         #     self.dictionary.insertAndUpdate(key, value)
-
-        msg = json.dumps(
-            {
-                'function': 'put',
-                'key': key,
-                'value': value,
-                'version': -1
-            }
-        )
-
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
-        resp = resp.decode(ENCODING_AND_DECODING_TYPE)
-
-        data = json.loads(resp)
-
-        key_returned = data['key']
-        old_value = data['old_value']
-        old_version = data['old_version']
-        new_version = data['new_version']
 
         try:
             return interface_pb2.PutReply(

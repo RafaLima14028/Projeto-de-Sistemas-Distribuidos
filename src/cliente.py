@@ -1,8 +1,8 @@
 import sys
 import grpc
 
-import project.interface_pb2_grpc as interface_pb2_grpc
-import project.interface_pb2 as interface_pb2
+import interface_pb2_grpc
+import interface_pb2
 from utils import check_number
 
 

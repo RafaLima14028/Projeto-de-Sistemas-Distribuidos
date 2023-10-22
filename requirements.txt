@@ -1,5 +1,4 @@
-grpcio
-grpcio-tools
-paho-mqtt~=1.6.1
+grpcio~=1.59.0
+grpcio-tools~=1.59.0
 lmdb~=1.4.1
 pysyncobj~=0.3.12

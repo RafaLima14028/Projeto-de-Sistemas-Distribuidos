@@ -17,6 +17,11 @@
 - [x] GetAll
 - [x] DelAll
 
+### Métodos do cache implementados (*temporário*)
+
+- [x] insertAndUpdate
+- [x] getByKeyVersion
+
 ### Requisitos
 
 - [x] Tabelas hash locais como cache para servidores
@@ -24,34 +29,39 @@
 - [x] Testes automatizados
 - [x] Tratamento de erros
 - [x] Execução de múltiplos clientes e servidores
-- [x] Propagação _pub-sub_
+- [ ] Replicação da base de dados
+- [ ] Servidores são máquinas de estados determinística
+- [ ] Três réplicas para o banco de dados
 
 ### Esquema de dados
 
-Para o armazenamento dos dados foi utilizado um dicionário,
+#### Cache:
+
+Para o armazenamento do cache foi utilizado um dicionário,
 de forma que cada chave (string) tem uma lista de tuplas contendo
-versão (inteiro) e um valor (string). Por exemplo:
+versão (inteiro), um valor (string) e o momento na qual a versão e
+o valor atual foram inseridos no cache. Esse último valor permite
+saber à quanto tempo esse valor e versão já estão inseridos, isso indica
+a "validade desses dados". O cache tem um limite de 1 minuto (60 segundos),
+após isso existe a necessidade de um novo acesso ao banco de dados e
+atualizar o cache para manter a consistência. Exemplo de como os dados
+são alocados no dicionário:
 
 ```python
-dictionary['key1'] = [(version1, value1), (version2, value2), ...]
-dictionary['key2'] = [(version3, value3)] 
+dictionary['key1'] = [((version1, value1), time_inseret_into_cache1), ((version2, value2), time_inseret_into_cache2), ...]
+dictionary['key2'] = [((version3, value3), time_inseret_into_cache3)]
 ```
 
-As mensagens _pub-sub_ foram formatadas da seguinte forma:
+#### Banco de dados:
 
-```python
-# inserção:
-topic='projeto-sd/insert'
-payload='key,version,value'
-
-# remoção:
-topic='projeto-sd/delete'
-payload='key'
-
-# trim:
-topic='projeto-sd/trim'
-payload='key'
-```
+Para o armazenamento dos dados de maneira persistente foi utilizando o LMDB.
+A ideia empregada é muito similar a do cache, para cada chave (string) existe
+uma tupla contendo uma versão (inteiro) e um valor (string). No momento de abertura
+do arquivo do banco de dados são passados dois parâmetros, um deles é o 
+sync=True indicando que operações de gravação sejam sincronizadas com o disco
+imediatamente. O outro parâmetro é o writemap=True, isso permite que o banco
+de dados seja mapeamento para a memória principal do sistema operacional,
+melhorando operações de escrira e leitura.
 
 ### Instalação e execução
 
@@ -67,14 +77,6 @@ Instale as dependências necessárias e compile os arquivos gRPC:
 cd Projeto-de-Sistemas-Distribuidos
 chmod +x compile.sh
 ./compile.sh
-```
-
-Inicialize o _mosquitto_, servidor e cliente:
-
-```bash
-mosquitto -v
-./server.sh
-./client.sh
 ```
 
 ### Link para o vídeo
