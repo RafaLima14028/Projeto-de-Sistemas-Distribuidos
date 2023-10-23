@@ -24,7 +24,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
         key_returned, value_returned, version_returned = (
-            self.__cache.getByKeyVersion(key=key, version=version)
+            self.__cache.getByKeyVersion(key, version)
         )
 
         try:
@@ -55,10 +55,10 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
-        # dict_range = self.__cache.getRangeByKeyVersion(
-        #     from_key, to_key,
-        #     from_version, to_version
-        # )
+        dict_range = self.__cache.getRangeByKeyVersion(
+            from_key, to_key,
+            from_version, to_version
+        )
 
         try:
             for key, values in data.items():
@@ -126,9 +126,9 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
         try:
             return interface_pb2.PutReply(
                 key=key_returned,
-                old_val=old_value,
-                old_ver=old_version,
-                ver=new_version
+                old_val=old_value_returned,
+                old_ver=old_version_returned,
+                ver=new_version_returned
             )
         except grpc.RpcError as e:
             context.set_code(e.code())
@@ -264,13 +264,13 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
-        # key_returned, last_value, last_version = self.__cache.trim(key)
+        key_returned, last_value, last_version = self.__cache.trim(key)
 
         try:
             return interface_pb2.KeyValueVersionReply(
                 key=key_returned,
                 val=last_value,
-                ver=new_version
+                ver=last_version
             )
         except grpc.RpcError as e:
             context.set_code(e.code())

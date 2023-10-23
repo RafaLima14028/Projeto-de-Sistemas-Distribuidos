@@ -29,7 +29,8 @@ class ManipulateDictionary:
 
     def __updateCache(self, key: str, value: str, version: int):
         if value == '' and version <= 0:
-            del self.__dictionary[key]
+            if key in self.__dictionary:
+                del self.__dictionary[key]
         else:
             if key in self.__dictionary:
                 del self.__dictionary[key]
@@ -45,12 +46,14 @@ class ManipulateDictionary:
                 break
 
     def insertAndUpdate(self, key: str, value: str) -> (str, str, int, int):
-        key_returned, old_value_returned, old_version_returned, new_version_returned = (
-            self.__handlesJson.Put(key, value)
-        )
-
+        print('Entrou aqui')
         if key in self.__dictionary:
             key_cache_returned, old_value, old_version = self.getByKeyVersion(key)
+
+            key_returned, old_value_returned, old_version_returned, new_version_returned = (
+                self.__handlesJson.Put(key, value)
+            )
+            print('Passou pelo LMDB')
 
             if self.__searchLastTime(key, old_value):
                 self.__checkKeyCleanliness(key, old_value)
@@ -63,6 +66,11 @@ class ManipulateDictionary:
             else:
                 return key_cache_returned, old_value, old_version, new_version_returned
         else:
+            key_returned, old_value_returned, old_version_returned, new_version_returned = (
+                self.__handlesJson.Put(key, value)
+            )
+            print('Passou pelo LMDB')
+
             self.__dictionary[key] = [
                 ((new_version_returned, value), int(time()))
             ]  # key: [((version, value), time_insert_in_cache)]
@@ -97,14 +105,17 @@ class ManipulateDictionary:
 
         if not self.__checkForUpdate(lastUpdateData):  # The data is still valid
             if valueSeach == '' and versionSeach <= 0:
+                print('Não precisou atualizar, mas os dados não existem')
                 return '', '', -1
             else:
+                print('Não precisou atualizar, mas os dados existem')
                 return key, valueSeach, versionSeach
         else:  # Data needs to be updated
             key_returned, value_returned, version_returned = self.__handlesJson.Get(key, version)
             self.__updateCache(key_returned, value_returned, version_returned)
 
-            return key, valueSeach, versionSeach
+            print(f'Não atualizar, {key_returned}, {value_returned} e {version_returned}')
+            return key_returned, value_returned, version_returned
 
     def getRangeByKeyVersion(self, start_key: str, end_key: str, start_version: float = -1,
                              end_version: float = -1) -> dict:
@@ -144,27 +155,26 @@ class ManipulateDictionary:
         else:
             return -1, ''
 
-    # Remove todos os valores associados à chave, exceto a versão mais recente, e retorna valor e versão para a chave
     def trim(self, key: str) -> (str, str, int):
-        # key_returned, last_value, new_version = self.__handlesJson.Trim(key)
+        last_key, last_value, last_version = self.getByKeyVersion(key)
 
         if key in self.__dictionary:
-            _, last_value, last_version = self.getByKeyVersion(key)
-
             self.__dictionary[key].clear()
             self.__dictionary[key].append((last_version, last_value))
 
-            return key, last_value, last_version
-        else:
-            return '', '', -1
+        self.__handlesJson.Trim(key)
+
+        return last_key, last_value, last_version
 
     def returnDictionary(self):
         return self.__dictionary
 
     def delete(self, key: str) -> (str, str, int):
-        if key in self.__dictionary:
-            key_cache_returned, value_cache_returned, verion_cache_returned = self.getByKeyVersion(key)
+        key_cache_returned, value_cache_returned, verion_cache_returned = (
+            self.getByKeyVersion(key)
+        )
 
+        if key in self.__dictionary:
             del self.__dictionary[key]
 
         self.__handlesJson.Del(key)

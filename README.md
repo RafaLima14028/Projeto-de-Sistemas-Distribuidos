@@ -35,6 +35,10 @@ atualiza o cache e retorna.
 - **Del**: Busca a chave no cache usando a função Get e 
 executa a operação de excluir todas as chaves do cache e depois executa no
 banco de dados também.
+- **Trim**: Busca a chave no cache usando a função Get e 
+executa a operação de excluir todas as chaves do cache, 
+guarda os últimos dados que haviam e depois executa no
+banco de dados também.
 
 ### Requisitos
 
