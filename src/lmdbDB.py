@@ -1,31 +1,21 @@
 import lmdb
-from pysyncobj import SyncObj
+from pysyncobj import SyncObj, replicated
 import struct
 import pickle
-from time import time
+from time import time, sleep
 
 from utils import ENCODING_AND_DECODING_TYPE
 
 
 class Database(SyncObj):
-    def __init__(self, port, primary, secundary):
+    def __init__(self, primary: str, secundary: [str]):
         super(Database, self).__init__(primary, secundary)
-        self.path_database = f'my_db/{port}/'
+        self.__path_database = f'data_db/'
+        self.__env = lmdb.open(self.__path_database, sync=True, writemap=True)
 
-    def __open_db(self):
-        db = None
-
-        try:
-            db = lmdb.open(self.path_database, sync=True, writemap=True)
-        except lmdb.Error as e:
-            raise Exception(f'Database open failed: {str(e)}')
-
-        return db
-
+    @replicated
     def put(self, key: str, value: str) -> (str, str, int, int):
         _, old_value_bytes, old_version = self.get(key)
-
-        db = self.__open_db()
 
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
         value_bytes = value.encode(ENCODING_AND_DECODING_TYPE)
@@ -33,7 +23,9 @@ class Database(SyncObj):
         new_version = int(time())
         new_version_bytes = struct.pack('>Q', new_version)
 
-        with db.begin(write=True) as txn:
+        print('Passou aqui 2')
+
+        with lmdb.open(self.__path_database, sync=True, writemap=True).begin(write=True) as txn:
             try:
                 cursor = txn.cursor()
                 cursor.get(key_bytes, default=None)
@@ -49,17 +41,16 @@ class Database(SyncObj):
             except lmdb.Error as e:
                 raise Exception(f'A database insertion failure occurred: {str(e)}')
 
-        db.close()
+        print('Aqui')
+        print(key, old_value_bytes, old_version, new_version)
 
         return key, old_value_bytes, old_version, new_version
 
     def get_all_values_key(self, key: str) -> [(str, int)]:
-        db = self.__open_db()
-
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
         values = []
 
-        with db.begin() as txn:
+        with lmdb.open(self.__path_database, sync=True, writemap=True).begin() as txn:
             try:
                 cursor = txn.cursor()
                 cursor.get(key_bytes, default=None)
@@ -73,8 +64,6 @@ class Database(SyncObj):
                         values.append((value_bytes.decode(ENCODING_AND_DECODING_TYPE), version))
             except lmdb.Error as e:
                 raise Exception(f'Failed to fetch data from the database: {str(e)}')
-
-        db.close()
 
         return values
 
@@ -112,10 +101,8 @@ class Database(SyncObj):
     def getRange(self, start_key: str, end_key: str, start_version: int = -1, end_version: int = -1) -> dict:
         values_in_range = dict()
 
-        db = self.__open_db()
-
         if start_version <= 0 or end_version <= 0:
-            with db.begin() as tnx:
+            with self.__env.begin() as tnx:
                 try:
                     for key, values in tnx.cursor():
                         key = key.decode(ENCODING_AND_DECODING_TYPE)
@@ -131,7 +118,7 @@ class Database(SyncObj):
             max_request_version = max(start_version, end_version)
 
             if start_version <= 0 or end_version <= 0:
-                with db.begin() as tnx:
+                with self.__env.begin() as tnx:
                     try:
                         for key, values in tnx.cursor():
                             key = key.decode(ENCODING_AND_DECODING_TYPE)
@@ -146,33 +133,27 @@ class Database(SyncObj):
                     except lmdb.Error as e:
                         raise Exception(f'Database get in range failed: {str(e)}')
 
-        db.close()
-
         return values_in_range
 
+    # @replicated
     def delete(self, key: str) -> (str, str, int):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
 
         _, last_value, last_version = self.get(key)
 
-        db = self.__open_db()
-
-        with db.begin(write=True) as txn:
+        with self.__env.begin(write=True) as txn:
             try:
                 txn.delete(key_bytes)
             except lmdb.Error as e:
                 raise Exception(f'Database delete failed: {str(e)}')
 
-        db.close()
-
         return key, last_value, last_version
 
+    # @replicated
     def delRange(self, start_key: str, end_key: str) -> dict:
         values_in_range = dict()
 
-        db = self.__open_db()
-
-        with db.begin(write=True) as txn:
+        with self.__env.begin(write=True) as txn:
             try:
                 cursor = txn.cursor()
 
@@ -191,10 +172,9 @@ class Database(SyncObj):
             except lmdb.Error as e:
                 raise Exception(f'Database delete in range failed: {str(e)}')
 
-        db.close()
-
         return values_in_range
 
+    # @replicated
     def trim(self, key: str) -> (str, str, int):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
 
@@ -205,9 +185,7 @@ class Database(SyncObj):
         new_version = last_version
         new_version_bytes = struct.pack('>Q', new_version)
 
-        db = self.__open_db()
-
-        with db.begin(write=True) as txn:
+        with self.__env.begin(write=True) as txn:
             try:
                 cursor = txn.cursor()
                 cursor.get(key_bytes, default=None)
@@ -223,17 +201,21 @@ class Database(SyncObj):
             except lmdb.Error as e:
                 raise Exception(f'A database insertion failure occurred: {str(e)}')
 
-        db.close()
-
         return key, last_value, new_version
 
 
 if __name__ == '__main__':
     server = Database(
-        '50055',
         'localhost:50056',
         ['localhost:50057', 'localhost:50058']
     )
 
-    print(server.put('Rafael', 'Alves'))
-    print(server.get('Rafael'))
+    print(f'Passou aqui: {server}')
+
+    result = server.put('Rafael', 'teste1')
+    print(result)
+    print(server.get_all_values_key('Rafael'))
+    # print(server.get_all_values_key('Rafael'))
+
+    # print(server.put('Rafael', 'Alves'))
+    # print(server.get('Rafael', -1))
