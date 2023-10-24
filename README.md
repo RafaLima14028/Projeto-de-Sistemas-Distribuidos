@@ -17,6 +17,19 @@
 - [x] GetAll
 - [x] DelAll
 
+### A fazer ainda (*temporário*)
+
+- Terminar a implementação do cache para o servidor
+- Implementar os novos testes
+- Modificar controllerDatabase.py para aceitar portas diferentes
+e para portas válidas para a classe Database
+- No servidor falta algumas funções com cache
+- Atualizar README.md com as instruções de compilação,
+inicialização e uso do controllerDatabase, servidor e cliente.
+- Criar o replica.sh, para executar o sistema de replicação
+de banco de dados.
+- Colocar a escolha da porta nos scripts.
+
 ### Métodos do cache implementados (*temporário*)
 
 - [x] insertAndUpdate
@@ -47,9 +60,8 @@ banco de dados também.
 - [x] Testes automatizados
 - [x] Tratamento de erros
 - [x] Execução de múltiplos clientes e servidores
-- [ ] Replicação da base de dados
-- [ ] Servidores são máquinas de estados determinística
-- [ ] Três réplicas para o banco de dados
+- [x] Três réplicas para o banco de dados
+- [x] Servidores são máquinas de estados determinística
 
 ### Esquema de dados
 

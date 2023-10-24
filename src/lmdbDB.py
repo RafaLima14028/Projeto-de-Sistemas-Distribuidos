@@ -21,10 +21,10 @@ class Database(SyncObj):
             max_readers=3
         )
 
+        sleep(5)
+
         print(self.__env.info())
         print(self.__env.stat())
-
-        sleep(5)
         print('Initialized the database')
 
     @replicated_sync
