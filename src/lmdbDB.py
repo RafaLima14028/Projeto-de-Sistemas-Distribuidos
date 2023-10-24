@@ -1,5 +1,5 @@
 import lmdb
-from pysyncobj import SyncObj, replicated
+from pysyncobj import SyncObj, replicated_sync
 import struct
 import pickle
 from time import time, sleep
@@ -11,9 +11,23 @@ class Database(SyncObj):
     def __init__(self, primary: str, secundary: [str]):
         super(Database, self).__init__(primary, secundary)
         self.__path_database = f'data_db/'
-        self.__env = lmdb.open(self.__path_database, sync=True, writemap=True)
 
-    @replicated
+        self.__env = lmdb.open(
+            path=self.__path_database,
+            sync=True,
+            writemap=True,
+            map_async=True,
+            readonly=False,
+            max_readers=3
+        )
+
+        print(self.__env.info())
+        print(self.__env.stat())
+
+        sleep(5)
+        print('Initialized the database')
+
+    @replicated_sync
     def put(self, key: str, value: str) -> (str, str, int, int):
         _, old_value_bytes, old_version = self.get(key)
 
@@ -23,9 +37,7 @@ class Database(SyncObj):
         new_version = int(time())
         new_version_bytes = struct.pack('>Q', new_version)
 
-        print('Passou aqui 2')
-
-        with lmdb.open(self.__path_database, sync=True, writemap=True).begin(write=True) as txn:
+        with self.__env.begin(write=True) as txn:
             try:
                 cursor = txn.cursor()
                 cursor.get(key_bytes, default=None)
@@ -39,10 +51,8 @@ class Database(SyncObj):
                 existing_values.append((new_version_bytes, value_bytes))
                 txn.put(key_bytes, pickle.dumps(existing_values))
             except lmdb.Error as e:
+                txn.abort()
                 raise Exception(f'A database insertion failure occurred: {str(e)}')
-
-        print('Aqui')
-        print(key, old_value_bytes, old_version, new_version)
 
         return key, old_value_bytes, old_version, new_version
 
@@ -50,7 +60,7 @@ class Database(SyncObj):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
         values = []
 
-        with lmdb.open(self.__path_database, sync=True, writemap=True).begin() as txn:
+        with self.__env.begin() as txn:
             try:
                 cursor = txn.cursor()
                 cursor.get(key_bytes, default=None)
@@ -135,7 +145,7 @@ class Database(SyncObj):
 
         return values_in_range
 
-    # @replicated
+    @replicated_sync
     def delete(self, key: str) -> (str, str, int):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
 
@@ -145,11 +155,15 @@ class Database(SyncObj):
             try:
                 txn.delete(key_bytes)
             except lmdb.Error as e:
+                txn.abort()
                 raise Exception(f'Database delete failed: {str(e)}')
 
-        return key, last_value, last_version
+        if last_value == '' and last_version <= 0:
+            return '', '', -1
+        else:
+            return key, last_value, last_version
 
-    # @replicated
+    @replicated_sync
     def delRange(self, start_key: str, end_key: str) -> dict:
         values_in_range = dict()
 
@@ -170,52 +184,95 @@ class Database(SyncObj):
 
                         cursor.delete()
             except lmdb.Error as e:
+                txn.abort()
                 raise Exception(f'Database delete in range failed: {str(e)}')
 
         return values_in_range
 
-    # @replicated
+    @replicated_sync
     def trim(self, key: str) -> (str, str, int):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
 
-        _, last_value, last_version = self.delete(key)
-
-        value_bytes = last_value.encode(ENCODING_AND_DECODING_TYPE)
-
-        new_version = last_version
-        new_version_bytes = struct.pack('>Q', new_version)
+        _, last_value, last_version = self.get(key)
 
         with self.__env.begin(write=True) as txn:
             try:
-                cursor = txn.cursor()
-                cursor.get(key_bytes, default=None)
-                existing_values = cursor.value()
-
-                if existing_values:
-                    existing_values = pickle.loads(existing_values)
-                else:
-                    existing_values = []
-
-                existing_values.append((new_version_bytes, value_bytes))
-                txn.put(key_bytes, pickle.dumps(existing_values))
+                txn.delete(key_bytes)
             except lmdb.Error as e:
-                raise Exception(f'A database insertion failure occurred: {str(e)}')
+                txn.abort()
+                raise Exception(f'Database delete failed: {str(e)}')
 
-        return key, last_value, new_version
+        if last_value == '' and last_version <= 0:
+            key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
+            value_bytes = last_value.encode(ENCODING_AND_DECODING_TYPE)
+
+            new_version = last_version
+            new_version_bytes = struct.pack('>Q', new_version)
+
+            with self.__env.begin(write=True) as txn:
+                try:
+                    cursor = txn.cursor()
+                    cursor.get(key_bytes, default=None)
+                    existing_values = cursor.value()
+
+                    if existing_values:
+                        existing_values = pickle.loads(existing_values)
+                    else:
+                        existing_values = []
+
+                    existing_values.append((new_version_bytes, value_bytes))
+                    txn.put(key_bytes, pickle.dumps(existing_values))
+                except lmdb.Error as e:
+                    txn.abort()
+                    raise Exception(f'A database trim failure occurred: {str(e)}')
+
+            return key, last_value, last_version
+        else:
+            key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
+            value_bytes = last_value.encode(ENCODING_AND_DECODING_TYPE)
+
+            new_version = last_version
+            new_version_bytes = struct.pack('>Q', new_version)
+
+            with self.__env.begin(write=True) as txn:
+                try:
+                    cursor = txn.cursor()
+                    cursor.get(key_bytes, default=None)
+                    existing_values = cursor.value()
+
+                    if existing_values:
+                        existing_values = pickle.loads(existing_values)
+                    else:
+                        existing_values = []
+
+                    existing_values.append((new_version_bytes, value_bytes))
+                    txn.put(key_bytes, pickle.dumps(existing_values))
+                except lmdb.Error as e:
+                    txn.abort()
+                    raise Exception(f'A database trim failure occurred: {str(e)}')
+
+            return key, last_value, new_version
 
 
 if __name__ == '__main__':
     server = Database(
-        'localhost:50056',
-        ['localhost:50057', 'localhost:50058']
+        'localhost:50053',
+        ['localhost:50053', 'localhost:50053']
     )
 
-    print(f'Passou aqui: {server}')
+    print()
 
-    result = server.put('Rafael', 'teste1')
-    print(result)
-    print(server.get_all_values_key('Rafael'))
-    # print(server.get_all_values_key('Rafael'))
+    # print(f'Put: {server.put("Rafael", "teste2")}')
+    # print(f'All values: {server.get_all_values_key("Rafael")}')
+    # print(f'Get: {server.get("Rafael")}')
 
-    # print(server.put('Rafael', 'Alves'))
-    # print(server.get('Rafael', -1))
+    # print(f'Trim: {server.trim("Rafael")}')
+    # print(f'All values: {server.get_all_values_key("Rafael")}')
+
+    # print(f'All values: {server.get_all_values_key("Rafael")}')
+    # print(f'Del: {server.delete("Rafael")}')
+    # print(f'All values: {server.get_all_values_key("Rafael")}')
+
+    print(f'All values: {server.get_all_values_key("Rafael")}')
+    print(f'Trim: {server.trim("Rafael")}')
+    print(f'All values: {server.get_all_values_key("Rafael")}')

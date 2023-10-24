@@ -6,7 +6,7 @@ from lmdbDB import Database
 from utils import ENCODING_AND_DECODING_TYPE
 
 
-def controller(replica: Database, conn: socket):
+def controller(replica: Database, conn: socket) -> None:
     while True:
         data = conn.recv(4120)
         msg = data.decode(ENCODING_AND_DECODING_TYPE)
@@ -94,17 +94,18 @@ def controller(replica: Database, conn: socket):
 
 
 def run() -> None:
-    socketPort = 30020
-    socketHost = 'localhost'
     replica = Database(
-        socketPort,
         'localhost:39400',
         ['localhost:39402', 'localhost:39404']
     )
 
     s = socket.socket()
 
+    socketPort = 30020
+    socketHost = 'localhost'
+
     s.bind((socketHost, socketPort))
+    print()
     print((socketHost, socketPort))
     s.listen(30)
 
