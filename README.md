@@ -35,6 +35,8 @@ de banco de dados.
 - [x] insertAndUpdate
 - [x] getByKeyVersion
 - [x] delete
+- [x] getByKeyVersion
+- [x] trim
 
 ### Regras para atualizar o cache (*temporário*)
 

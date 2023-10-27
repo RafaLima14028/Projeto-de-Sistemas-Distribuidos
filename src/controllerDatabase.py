@@ -45,8 +45,11 @@ def controller(replica: Database, conn: socket) -> None:
             key = responseMsg['key']
             value = responseMsg['value']
 
-            key_returned, old_value, old_version, new_version \
-                = replica.put(key, value)
+            print('ENTROU NO PUT')
+
+            key_returned, old_value, old_version, new_version = replica.put(key, value)
+
+            print('PASSOU PELO PUT')
 
             resp = json.dumps(
                 {

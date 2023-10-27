@@ -47,8 +47,11 @@ class ManipulateDictionary:
 
     def insertAndUpdate(self, key: str, value: str) -> (str, str, int, int):
         print('Entrou aqui')
+
         if key in self.__dictionary:
             key_cache_returned, old_value, old_version = self.getByKeyVersion(key)
+
+            print('Passou pelo get')
 
             key_returned, old_value_returned, old_version_returned, new_version_returned = (
                 self.__handlesJson.Put(key, value)

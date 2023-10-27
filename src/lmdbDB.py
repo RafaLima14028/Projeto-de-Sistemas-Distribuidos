@@ -1,8 +1,9 @@
 import lmdb
-from pysyncobj import SyncObj, replicated_sync
+from pysyncobj import SyncObj, replicated, replicated_sync
 import struct
 import pickle
 from time import time, sleep
+import threading
 
 from utils import ENCODING_AND_DECODING_TYPE
 
@@ -18,8 +19,10 @@ class Database(SyncObj):
             writemap=True,
             map_async=True,
             readonly=False,
-            max_readers=3
+            max_readers=1
         )
+
+        self.__lock = threading.Lock()
 
         sleep(5)
 
@@ -37,22 +40,25 @@ class Database(SyncObj):
         new_version = int(time())
         new_version_bytes = struct.pack('>Q', new_version)
 
-        with self.__env.begin(write=True) as txn:
-            try:
-                cursor = txn.cursor()
-                cursor.get(key_bytes, default=None)
-                existing_values = cursor.value()
+        with self.__lock:
+            with self.__env.begin(write=True) as txn:
+                try:
+                    cursor = txn.cursor()
+                    cursor.get(key_bytes, default=None)
+                    existing_values = cursor.value()
 
-                if existing_values:
-                    existing_values = pickle.loads(existing_values)
-                else:
-                    existing_values = []
+                    if existing_values:
+                        existing_values = pickle.loads(existing_values)
+                    else:
+                        existing_values = []
 
-                existing_values.append((new_version_bytes, value_bytes))
-                txn.put(key_bytes, pickle.dumps(existing_values))
-            except lmdb.Error as e:
-                txn.abort()
-                raise Exception(f'A database insertion failure occurred: {str(e)}')
+                    existing_values.append((new_version_bytes, value_bytes))
+                    txn.put(key_bytes, pickle.dumps(existing_values))
+                except lmdb.Error as e:
+                    txn.abort()
+                    raise Exception(f'A database insertion failure occurred: {str(e)}')
+
+        sleep(5)
 
         return key, old_value_bytes, old_version, new_version
 
@@ -145,7 +151,7 @@ class Database(SyncObj):
 
         return values_in_range
 
-    @replicated_sync
+    @replicated
     def delete(self, key: str) -> (str, str, int):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
 
@@ -163,7 +169,7 @@ class Database(SyncObj):
         else:
             return key, last_value, last_version
 
-    @replicated_sync
+    @replicated
     def delRange(self, start_key: str, end_key: str) -> dict:
         values_in_range = dict()
 
@@ -189,7 +195,7 @@ class Database(SyncObj):
 
         return values_in_range
 
-    @replicated_sync
+    @replicated
     def trim(self, key: str) -> (str, str, int):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
 
