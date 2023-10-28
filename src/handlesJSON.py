@@ -9,7 +9,7 @@ class HandlesJsonCache:
         self.sk = socket.socket()
         self.sk.connect(('localhost', 30020))
 
-    def Get(self, key: str, version: int = -1):
+    def Get(self, key: str, version: int = -1) -> (str, str, int):
         msg = json.dumps(
             {
                 'function': 'get',
@@ -31,7 +31,7 @@ class HandlesJsonCache:
 
         return key_returned, value_returned, version_returned
 
-    def GetRange(self, from_key: str, to_key: str, from_version: int = -1, to_version: int = -1):
+    def GetRange(self, from_key: str, to_key: str, from_version: int = -1, to_version: int = -1) -> dict:
         msg = json.dumps(
             {
                 'function': 'getRange',

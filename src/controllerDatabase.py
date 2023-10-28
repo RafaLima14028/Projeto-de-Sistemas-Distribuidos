@@ -1,4 +1,4 @@
-import socket
+from socket import socket
 import threading
 import json
 
@@ -11,16 +11,17 @@ def controller(replica: Database, conn: socket) -> None:
         data = conn.recv(4120)
         msg = data.decode(ENCODING_AND_DECODING_TYPE)
 
-        functionName = ''
+        function_name = ''
         resp = None
+        response_msg = None
 
         if msg:
-            responseMsg = json.loads(msg)
-            functionName = responseMsg['function']
+            response_msg = json.loads(msg)
+            function_name = response_msg['function']
 
-        if functionName == 'get' or functionName == 'getAll':
-            key = responseMsg['key']
-            version = responseMsg['version']
+        if function_name == 'get' or function_name == 'getAll':
+            key = response_msg['key']
+            version = response_msg['version']
 
             key_returned, last_value, last_version = replica.get(key, version)
 
@@ -31,25 +32,20 @@ def controller(replica: Database, conn: socket) -> None:
                     'version_returned': last_version
                 }
             )
-        elif functionName == 'getRange':
-            start_key = responseMsg['start_key']
-            end_key = responseMsg['end_key']
-            start_version = responseMsg['start_version']
-            end_version = responseMsg['end_version']
+        elif function_name == 'getRange':
+            start_key = response_msg['start_key']
+            end_key = response_msg['end_key']
+            start_version = response_msg['start_version']
+            end_version = response_msg['end_version']
 
-            replica_response_dict = \
-                replica.getRange(start_key, end_key, start_version, end_version)
+            replica_response_dict = replica.getRange(start_key, end_key, start_version, end_version)
 
             resp = json.dumps(replica_response_dict)
-        elif functionName == 'put' or functionName == 'putAll':
-            key = responseMsg['key']
-            value = responseMsg['value']
-
-            print('ENTROU NO PUT')
+        elif function_name == 'put' or function_name == 'putAll':
+            key = response_msg['key']
+            value = response_msg['value']
 
             key_returned, old_value, old_version, new_version = replica.put(key, value)
-
-            print('PASSOU PELO PUT')
 
             resp = json.dumps(
                 {
@@ -59,8 +55,8 @@ def controller(replica: Database, conn: socket) -> None:
                     'new_version': new_version
                 }
             )
-        elif functionName == 'del' or functionName == 'delAll':
-            key = responseMsg['key']
+        elif function_name == 'del' or function_name == 'delAll':
+            key = response_msg['key']
 
             key_returned, last_value, last_version = replica.delete(key)
 
@@ -71,15 +67,15 @@ def controller(replica: Database, conn: socket) -> None:
                     'last_version': last_version,
                 }
             )
-        elif functionName == 'delRange':
-            start_key = responseMsg['start_key']
-            end_key = responseMsg['end_key']
+        elif function_name == 'delRange':
+            start_key = response_msg['start_key']
+            end_key = response_msg['end_key']
 
             replica_response_dict = replica.delRange(start_key, end_key)
 
             resp = json.dumps(replica_response_dict)
-        elif functionName == 'trim':
-            key = responseMsg['key']
+        elif function_name == 'trim':
+            key = response_msg['key']
 
             key_returned, last_value, new_version = replica.trim(key)
 
@@ -97,24 +93,26 @@ def controller(replica: Database, conn: socket) -> None:
 
 
 def run() -> None:
-    replica = Database(
-        'localhost:39400',
-        ['localhost:39402', 'localhost:39404']
-    )
+    primary_node = 'localhost:39400'
+    seconde_node = 'localhost:39401'
+    third_node = 'localhost:39402'
 
-    s = socket.socket()
+    replica1 = Database(primary_node, [seconde_node, third_node])
+    replica2 = Database(seconde_node, [primary_node, third_node])
+    replica3 = Database(third_node, [primary_node, seconde_node])
 
-    socketPort = 30020
-    socketHost = 'localhost'
+    skt = socket()
 
-    s.bind((socketHost, socketPort))
-    print()
-    print((socketHost, socketPort))
-    s.listen(30)
+    socket_port = 30020
+    socket_host = 'localhost'
+
+    skt.bind((socket_host, socket_port))
+    print((socket_host, socket_port))
+    skt.listen(30)
 
     while True:
-        conn, addr = s.accept()
-        threading.Thread(target=controller, args=(replica, conn)).start()
+        conn, addr = skt.accept()
+        threading.Thread(target=controller, args=(replica1, conn)).start()
 
 
 if __name__ == '__main__':

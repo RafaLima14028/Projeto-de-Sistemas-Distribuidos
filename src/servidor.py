@@ -92,13 +92,20 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key, version in zip(keys, versions):
-                # version_returned, value_returned = self.__cache.getAllInRange(key, version)
+                key_returned, value_returned, version_returned = self.__cache.getByKeyVersion(key, version)
 
-                response = interface_pb2.KeyValueVersionReply(
-                    key=key_returned,
-                    val=value_returned,
-                    ver=version_returned
-                )
+                if key_returned == '' and value_returned == '' and version_returned <= 0:
+                    response = interface_pb2.KeyValueVersionReply(
+                        key=key,
+                        val='',
+                        ver=-1
+                    )
+                else:
+                    response = interface_pb2.KeyValueVersionReply(
+                        key=key_returned,
+                        val=value_returned,
+                        ver=version_returned
+                    )
 
                 yield response
         except grpc.RpcError as e:
@@ -157,8 +164,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key, value in zip(keys, values):
-                # key_returned, old_value_returned, old_version_returned, new_version_returned = \
-                #     self.__cache.insertAndUpdate(key, value)
+                key_returned, old_value, old_version, new_version = self.__cache.insertAndUpdate(key, value)
 
                 response.append(
                     interface_pb2.PutReply(
@@ -210,7 +216,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
-        # dict_range = self.__cache.delRange(from_key, to_key)
+        dict_range = self.__cache.delRange(from_key, to_key)
 
         try:
             for key, values in data.items():
@@ -242,7 +248,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key in keys:
-                # key_returned, value_returned, version_returned = self.__cache.delAll(key)
+                key_returned, value_returned, version_returned = self.__cache.delete(key)
 
                 response = interface_pb2.KeyValueVersionReply(
                     key=key_returned,
@@ -278,7 +284,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             raise grpc.RpcError
 
 
-def serve(port: int) -> None:
+def serve(port: int = 50051) -> None:
     class_work = KeyValueStoreServicer()
 
     try:

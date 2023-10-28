@@ -19,41 +19,44 @@
 
 ### A fazer ainda (*temporário*)
 
-- Terminar a implementação do cache para o servidor
 - Implementar os novos testes
-- Modificar controllerDatabase.py para aceitar portas diferentes
-e para portas válidas para a classe Database
-- No servidor falta algumas funções com cache
+- Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes
+- No servidor há algumas funções sem cache
 - Atualizar README.md com as instruções de compilação,
-inicialização e uso do controllerDatabase, servidor e cliente.
+  inicialização e uso do controllerDatabase, servidor e cliente.
 - Criar o replica.sh, para executar o sistema de replicação
-de banco de dados.
+  de banco de dados.
 - Colocar a escolha da porta nos scripts.
 
 ### Métodos do cache implementados (*temporário*)
 
 - [x] insertAndUpdate
 - [x] getByKeyVersion
-- [x] delete
-- [x] getByKeyVersion
+- [x] getRangeByKeyVersion
 - [x] trim
+- [x] delete
+- [ ] delRange
 
 ### Regras para atualizar o cache (*temporário*)
 
 - **Put**: Verificar se o cache está dentro de um tempo válido, senão atualiza do db.
-Se o dado já existe, retorna do cache.
-- **Get**: Verifica se existe ou não no cache os dados. 
-Se os dados existem, verifica se está no tempo válido e retorna, senão atualiza o 
-cache e retorna.
-Se os dados não existirem, verifica se está no tempo válido e retorna, senão
-atualiza o cache e retorna.
-- **Del**: Busca a chave no cache usando a função Get e 
-executa a operação de excluir todas as chaves do cache e depois executa no
-banco de dados também.
-- **Trim**: Busca a chave no cache usando a função Get e 
-executa a operação de excluir todas as chaves do cache, 
-guarda os últimos dados que haviam e depois executa no
-banco de dados também.
+  Se o dado já existe, retorna do cache.
+- **Get**: Verifica se existe ou não no cache os dados.
+  Se os dados existem, verifica se está no tempo válido e retorna, senão atualiza o
+  cache e retorna.
+  Se os dados não existirem, verifica se está no tempo válido e retorna, senão
+  atualiza o cache e retorna.
+- **Del**: Busca a chave no cache usando a função Get e
+  executa a operação de excluir todas as chaves do cache e depois executa no
+  banco de dados também.
+- **Trim**: Busca a chave no cache usando a função Get e
+  executa a operação de excluir todas as chaves do cache,
+  guarda os últimos dados que haviam e depois executa no
+  banco de dados também.
+- **GetRange**: Verifica se existe ou não no cache os dados. Se os dados existirem, verifica
+  se está no tempo válido e retorna, senão atualiza o cache e retorna.
+  Se os dados não existirem, verifica se está no tempo válido e retorna, senão atualiza o cache e retorna.
+- **DelRange**:
 
 ### Requisitos
 
@@ -89,11 +92,23 @@ dictionary['key2'] = [((version3, value3), time_inseret_into_cache3)]
 Para o armazenamento dos dados de maneira persistente foi utilizando o LMDB.
 A ideia empregada é muito similar a do cache, para cada chave (string) existe
 uma tupla contendo uma versão (inteiro) e um valor (string). No momento de abertura
-do arquivo do banco de dados são passados dois parâmetros, um deles é o 
+do arquivo do banco de dados são passados dois parâmetros, um deles é o
 sync=True indicando que operações de gravação sejam sincronizadas com o disco
 imediatamente. O outro parâmetro é o writemap=True, isso permite que o banco
 de dados seja mapeamento para a memória principal do sistema operacional,
-melhorando operações de escrira e leitura.
+melhorando operações de escrira e leitura. O decorador @replicated_sync, garante que as operações marcadas com ele
+ocorram de maneira síncrona para todos os nós do sistema.
+
+#### Comunicação entre o cache e banco de dados:
+
+Para a comunicação entre o banco de dados e o servidor, o cache faz a intermediação entre eles.
+Sempre que o dados expirou no cache, é recorrido ao banco de dados que atualiza o cache e
+para o retorno dos dados ao servidor. Essa intermediação entre banco de dados e cache ocorre
+por meio de um JSON de envio e outro de resposta para o cache, esse envio e resposta só é possível por conta
+do socket. O JSON envio com o cache vai com a função de requisição e os dados que são necessários para a requisição
+no banco de dados, sendo enviado via a comunicação entre ambos os lados. Já o lado do banco de dados ao receber
+o JSON do cache, é verificado qual função que requisitou para saber qual será a resposta, ou seja, é atualiza o
+banco de dados e as informações são retornadas ao cache por meio de um JSON que é enviado por um socket.
 
 ### Instalação e execução
 

@@ -5,8 +5,6 @@ from handlesJSON import HandlesJsonCache
 
 
 class ManipulateDictionary:
-    __dictionary = None
-
     def __init__(self):
         self.__dictionary = dict()
         self.__handlesJson = HandlesJsonCache()
@@ -46,17 +44,12 @@ class ManipulateDictionary:
                 break
 
     def insertAndUpdate(self, key: str, value: str) -> (str, str, int, int):
-        print('Entrou aqui')
-
         if key in self.__dictionary:
             key_cache_returned, old_value, old_version = self.getByKeyVersion(key)
-
-            print('Passou pelo get')
 
             key_returned, old_value_returned, old_version_returned, new_version_returned = (
                 self.__handlesJson.Put(key, value)
             )
-            print('Passou pelo LMDB')
 
             if self.__searchLastTime(key, old_value):
                 self.__checkKeyCleanliness(key, old_value)
@@ -72,7 +65,6 @@ class ManipulateDictionary:
             key_returned, old_value_returned, old_version_returned, new_version_returned = (
                 self.__handlesJson.Put(key, value)
             )
-            print('Passou pelo LMDB')
 
             self.__dictionary[key] = [
                 ((new_version_returned, value), int(time()))
@@ -108,33 +100,36 @@ class ManipulateDictionary:
 
         if not self.__checkForUpdate(lastUpdateData):  # The data is still valid
             if valueSeach == '' and versionSeach <= 0:
-                print('Não precisou atualizar, mas os dados não existem')
                 return '', '', -1
             else:
-                print('Não precisou atualizar, mas os dados existem')
                 return key, valueSeach, versionSeach
         else:  # Data needs to be updated
             key_returned, value_returned, version_returned = self.__handlesJson.Get(key, version)
             self.__updateCache(key_returned, value_returned, version_returned)
 
-            print(f'Não atualizar, {key_returned}, {value_returned} e {version_returned}')
             return key_returned, value_returned, version_returned
 
     def getRangeByKeyVersion(self, start_key: str, end_key: str, start_version: float = -1,
                              end_version: float = -1) -> dict:
         values_in_range = dict()
+        need_refresh = False
 
         if start_version > 0 and end_version > 0:
             max_requested_version = max(start_version, end_version)
 
             for key, values in self.__dictionary.items():
                 if start_key <= key <= end_key:
-                    for version, value in values:
-                        if version <= max_requested_version:
-                            if key in values_in_range:
-                                values_in_range[key].append((version, value))
-                            else:
-                                values_in_range[key] = [(version, value)]
+                    for values, last_time_update in values:
+                        if self.__checkForUpdate(last_time_update):  # Need to refresh the cache with the data
+                            need_refresh = True
+                            break
+
+                        for version, value in values:
+                            if version <= max_requested_version:
+                                if key in values_in_range:
+                                    values_in_range[key].append((version, value))
+                                else:
+                                    values_in_range[key] = [(version, value)]
         else:
             for k in list(self.__dictionary.keys()):
                 if start_key <= k <= end_key:
@@ -145,18 +140,15 @@ class ManipulateDictionary:
                     else:
                         values_in_range[k] = [(version_returned, value_returned)]
 
-        return values_in_range
+        if need_refresh:
+            new_dict = self.__handlesJson.GetRange(start_key, end_key, start_version, end_version)
 
-    def getAllInRange(self, key: str, version: int = -1) -> (int, str):
-        if key in self.__dictionary:
-            if version > 0:
-                _, value_returned, version_returned = self.getByKeyVersion(key, version)
-                return version_returned, value_returned
-            else:
-                _, value_returned, version_returned = self.getByKeyVersion(key)
-                return version_returned, value_returned
+            for k, v in new_dict:
+                self.__updateCache(k, v[1], v[0])
+
+            return new_dict
         else:
-            return -1, ''
+            return values_in_range
 
     def trim(self, key: str) -> (str, str, int):
         last_key, last_value, last_version = self.getByKeyVersion(key)
@@ -206,16 +198,6 @@ class ManipulateDictionary:
 
         return values_in_range
 
-    def delAll(self, key: str) -> list:
-        if key in self.__dictionary:
-            _, value_returned, version_returned = self.getByKeyVersion(key)
-
-            del self.__dictionary[key]
-
-            return key, value_returned, version_returned
-        else:
-            return '', '', -1
-
 
 if __name__ == '__main__':
     d = ManipulateDictionary()
@@ -226,22 +208,15 @@ if __name__ == '__main__':
     print()
     print(d.insertAndUpdate('Carolina', 'Carla'))
     print()
-    sleep(3)
-    print(d.insertAndUpdate('Rafael', 'Carlos2'))
+    print(d.insertAndUpdate('Thiado', 'kkkk'))
     print()
-    print(d.getByKeyVersion('Rafael'))
-    sleep(62)
-    print(d.getByKeyVersion('Rafael'))
+    print(d.insertAndUpdate('Rafael', 'Carlos2'))
 
-    # print(d.getByKeyVersion('Rafael'))
-    # sleep(62)
-    #
-    # print(d.getByKeyVersion('Pietro'))
-    # print(d.getByKeyVersion('Rafael'))
+    print()
+    print()
 
-    print(d.returnDictionary())
+    print(d.getRangeByKeyVersion('R', 'Z'))
 
-    # for k, v in d.returnDictionary().items():
-    #     print(k)
-    #     for v1, v2 in v:
-    #         print(f'\t {v1} e {v2}')
+    sleep(63)
+
+    print(d.getRangeByKeyVersion('A', 'Z'))
