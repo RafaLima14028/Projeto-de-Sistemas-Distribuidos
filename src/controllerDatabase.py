@@ -95,22 +95,34 @@ def controller(replica: Database, conn: socket) -> None:
 
 def run(bd, port=None) -> None:
     if port is None:
-        bd1_node = f'{SERVER_DB_ADDRESS}:39400'
-        bd2_node = f'{SERVER_DB_ADDRESS}:39401'
-        bd3_node = f'{SERVER_DB_ADDRESS}:39402'
+        port = 39400
     else:
         port = int(port)
-        bd1_node = f'{SERVER_DB_ADDRESS}:{port}'
-        bd2_node = f'{SERVER_DB_ADDRESS}:{port + 1}'
-        bd3_node = f'{SERVER_DB_ADDRESS}:{port + 2}'
 
-    replica1 = Database(bd1_node, [bd2_node, bd3_node])
-    replica2 = Database(bd2_node, [bd1_node, bd3_node])
-    replica3 = Database(bd3_node, [bd1_node, bd2_node])
+    match bd:
+        case 'bd1':
+            port = port + 1
+            socket_port = SERVER_DB_SOCKET_PORT
+            pass
+        case 'bd2':
+            port = port + 2
+            socket_port = SERVER_DB_SOCKET_PORT + 1
+            pass
+        case 'bd3':
+            port = port + 3
+            socket_port = SERVER_DB_SOCKET_PORT + 2
+            pass
+        case _:
+            print(f'Invalid argument: {bd}')
+            exit(1)
+
+    bd_node = f'{SERVER_DB_ADDRESS}:{port}'
+
+    replica = Database(bd_node, bd)
+    replica.addNodeToCluster(bd_node)
 
     skt = socket()
 
-    socket_port = SERVER_DB_SOCKET_PORT
     socket_host = SERVER_DB_ADDRESS
 
     skt.bind((socket_host, socket_port))
@@ -119,12 +131,12 @@ def run(bd, port=None) -> None:
 
     while True:
         conn, addr = skt.accept()
-        threading.Thread(target=controller, args=(replica1, conn)).start()
+        threading.Thread(target=controller, args=(replica, conn)).start()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--bd')
+    parser.add_argument('bd')
     parser.add_argument('--port')
 
     args = parser.parse_args()

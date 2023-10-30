@@ -1,8 +1,10 @@
+import os
 import threading
 from time import sleep
 
-from src import cliente, servidor
+from src import cliente, servidor, controllerDatabase
 
+os.chdir('src')
 
 def print_conteudo():
     sleep(3)
@@ -15,9 +17,20 @@ def print_conteudo():
     cliente.get_range(50053, 'teste1', 'teste99', 0, 0)
 
 
+bd1_thread = threading.Thread(target=controllerDatabase.run, args=('bd1',))
+bd2_thread = threading.Thread(target=controllerDatabase.run, args=('bd2',))
+bd3_thread = threading.Thread(target=controllerDatabase.run, args=('bd3',))
+
 server1_thread = threading.Thread(target=servidor.serve, args=(50051,))
 server2_thread = threading.Thread(target=servidor.serve, args=(50052,))
 server3_thread = threading.Thread(target=servidor.serve, args=(50053,))
+
+bd1_thread.start()
+sleep(3)
+bd2_thread.start()
+sleep(3)
+bd3_thread.start()
+sleep(3)
 
 server1_thread.start()
 server2_thread.start()
