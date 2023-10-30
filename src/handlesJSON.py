@@ -1,13 +1,13 @@
 import json
 import socket
 
-from utils import ENCODING_AND_DECODING_TYPE
+from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT
 
 
 class HandlesJsonCache:
     def __init__(self):
         self.sk = socket.socket()
-        self.sk.connect(('localhost', 30020))
+        self.sk.connect((SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT))
 
     def Get(self, key: str, version: int = -1) -> (str, str, int):
         msg = json.dumps(

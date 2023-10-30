@@ -1,9 +1,10 @@
+import argparse
 from socket import socket
 import threading
 import json
 
-from lmdbDB import Database
-from utils import ENCODING_AND_DECODING_TYPE
+from src.lmdbDB import Database
+from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT
 
 
 def controller(replica: Database, conn: socket) -> None:
@@ -92,19 +93,25 @@ def controller(replica: Database, conn: socket) -> None:
         conn.send(resp.encode(ENCODING_AND_DECODING_TYPE))
 
 
-def run() -> None:
-    primary_node = 'localhost:39400'
-    seconde_node = 'localhost:39401'
-    third_node = 'localhost:39402'
+def run(bd, port=None) -> None:
+    if port is None:
+        bd1_node = f'{SERVER_DB_ADDRESS}:39400'
+        bd2_node = f'{SERVER_DB_ADDRESS}:39401'
+        bd3_node = f'{SERVER_DB_ADDRESS}:39402'
+    else:
+        port = int(port)
+        bd1_node = f'{SERVER_DB_ADDRESS}:{port}'
+        bd2_node = f'{SERVER_DB_ADDRESS}:{port + 1}'
+        bd3_node = f'{SERVER_DB_ADDRESS}:{port + 2}'
 
-    replica1 = Database(primary_node, [seconde_node, third_node])
-    replica2 = Database(seconde_node, [primary_node, third_node])
-    replica3 = Database(third_node, [primary_node, seconde_node])
+    replica1 = Database(bd1_node, [bd2_node, bd3_node])
+    replica2 = Database(bd2_node, [bd1_node, bd3_node])
+    replica3 = Database(bd3_node, [bd1_node, bd2_node])
 
     skt = socket()
 
-    socket_port = 30020
-    socket_host = 'localhost'
+    socket_port = SERVER_DB_SOCKET_PORT
+    socket_host = SERVER_DB_ADDRESS
 
     skt.bind((socket_host, socket_port))
     print((socket_host, socket_port))
@@ -116,4 +123,10 @@ def run() -> None:
 
 
 if __name__ == '__main__':
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--bd')
+    parser.add_argument('--port')
+
+    args = parser.parse_args()
+
+    run(args.bd, args.port)

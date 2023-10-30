@@ -21,12 +21,11 @@
 
 - Implementar os novos testes
 - Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes
+  - controllerDatabase.py aceita porta como argumento `--port [porta]`, porta default ainda é 39400
 - No servidor há algumas funções sem cache
 - Atualizar README.md com as instruções de compilação,
   inicialização e uso do controllerDatabase, servidor e cliente.
-- Criar o replica.sh, para executar o sistema de replicação
-  de banco de dados.
-- Colocar a escolha da porta nos scripts.
+- Definir argumentos para replica.sh / controllerDatabase.py
 
 ### Métodos do cache implementados (*temporário*)
 
