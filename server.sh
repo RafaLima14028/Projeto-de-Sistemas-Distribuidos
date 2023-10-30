@@ -1,3 +1,3 @@
 #!/bin/bash
 source venv/bin/activate
-python ./src/servidor.py 50051
+python ./src/servidor.py $1
