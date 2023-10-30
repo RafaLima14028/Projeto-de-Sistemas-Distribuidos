@@ -1,7 +1,7 @@
 from time import time, sleep
 import socket
 
-from handlesJSON import HandlesJsonCache
+from src.handlesJSON import HandlesJsonCache
 
 
 class ManipulateDictionary:

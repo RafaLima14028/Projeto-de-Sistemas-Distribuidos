@@ -1,13 +1,10 @@
 import sys
 from concurrent import futures
 import grpc
-import socket
-import json
 
-import interface_pb2_grpc
-import interface_pb2
-from manipulateDictionary import ManipulateDictionary
-from utils import check_string, ENCODING_AND_DECODING_TYPE
+from src.proto import interface_pb2_grpc, interface_pb2
+from src.manipulateDictionary import ManipulateDictionary
+from src.utils import check_string
 
 
 class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):

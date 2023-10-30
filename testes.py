@@ -1,8 +1,7 @@
 import threading
 from time import sleep
 
-import src.cliente as cliente
-import src.servidor as servidor
+from src import cliente, servidor
 
 
 def print_conteudo():
