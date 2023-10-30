@@ -6,6 +6,7 @@ from src import cliente, servidor, controllerDatabase
 
 os.chdir('src')
 
+
 def print_conteudo():
     sleep(3)
     print("\n==========================================\nConteúdo de todos os servidores:")

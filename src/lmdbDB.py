@@ -9,7 +9,11 @@ from src.utils import ENCODING_AND_DECODING_TYPE
 
 class Database(SyncObj):
     def __init__(self, selfNode, path):
-        super(Database, self).__init__(selfNode, [], SyncObjConf(dynamicMembershipChange=True))
+        super(Database, self).__init__(
+            selfNode,
+            [],
+            SyncObjConf(dynamicMembershipChange=True)
+        )
         self.__path_database = f'data_db/{path}/'
 
         self.__env = lmdb.open(
@@ -251,23 +255,3 @@ class Database(SyncObj):
                     raise Exception(f'A database trim failure occurred: {str(e)}')
 
             return key, last_value, new_version
-
-
-# if __name__ == '__main__':
-#     primary_node = 'localhost:39400'
-#     seconde_node = 'localhost:39401'
-#     third_node = 'localhost:39402'
-#
-#     node1 = Database(primary_node, [seconde_node, third_node])
-#     print()
-#     node2 = Database(seconde_node, [primary_node, third_node])
-#     print()
-#     node3 = Database(third_node, [primary_node, seconde_node])
-#     print()
-#
-#     print(node1.put('Rafael', 'Alves de lima ultimo'))
-#
-#     print(node3.get('Rafael'))
-#
-#     print(node2.delete('Rafael'))
-#     print(node1.get('Rafael'))

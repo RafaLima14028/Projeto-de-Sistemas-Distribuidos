@@ -197,26 +197,3 @@ class ManipulateDictionary:
             del self.__dictionary[key]
 
         return values_in_range
-
-
-if __name__ == '__main__':
-    d = ManipulateDictionary()
-
-    print(d.insertAndUpdate('abudabi', 'fds'))
-    print()
-    print(d.insertAndUpdate('Rafael', 'Carlos'))
-    print()
-    print(d.insertAndUpdate('Carolina', 'Carla'))
-    print()
-    print(d.insertAndUpdate('Thiado', 'kkkk'))
-    print()
-    print(d.insertAndUpdate('Rafael', 'Carlos2'))
-
-    print()
-    print()
-
-    print(d.getRangeByKeyVersion('R', 'Z'))
-
-    sleep(63)
-
-    print(d.getRangeByKeyVersion('A', 'Z'))

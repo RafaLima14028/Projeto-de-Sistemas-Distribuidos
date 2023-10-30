@@ -93,7 +93,7 @@ def controller(replica: Database, conn: socket) -> None:
         conn.send(resp.encode(ENCODING_AND_DECODING_TYPE))
 
 
-def run(bd, port=None) -> None:
+def run(bd: str, port: int = None) -> None:
     if port is None:
         port = 39400
     else:
@@ -123,10 +123,8 @@ def run(bd, port=None) -> None:
 
     skt = socket()
 
-    socket_host = SERVER_DB_ADDRESS
-
-    skt.bind((socket_host, socket_port))
-    print((socket_host, socket_port))
+    skt.bind((SERVER_DB_ADDRESS, socket_port))
+    print((SERVER_DB_ADDRESS, socket_port))
     skt.listen(30)
 
     while True:

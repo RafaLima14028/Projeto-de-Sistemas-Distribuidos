@@ -128,3 +128,5 @@ chmod +x compile.sh
 ### Link para o vídeo
 
 [Parte 1 do Projeto](https://youtu.be/9ZDFBH2iPKQ)
+<br/>
+[Parte 2 do Projeto]()
