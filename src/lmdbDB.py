@@ -3,8 +3,9 @@ from pysyncobj import SyncObj, SyncObjConf, replicated_sync
 import struct
 import pickle
 from time import time, sleep
+import os
 
-from src.utils import ENCODING_AND_DECODING_TYPE
+from src.utils import ENCODING_AND_DECODING_TYPE, DATABASE_PORTS_FILE
 
 
 class Database(SyncObj):
@@ -14,6 +15,8 @@ class Database(SyncObj):
             [],
             SyncObjConf(dynamicMembershipChange=True)
         )
+
+        self.__self_node = selfNode
         self.__path_database = f'data_db/{path}/'
 
         self.__env = lmdb.open(
@@ -29,6 +32,9 @@ class Database(SyncObj):
         print(f'The nodes are synchronized: {self.isReady()}')
         print(f'The node {selfNode} has been successfully initialized...')
         print()
+
+    def get_port(self) -> int:
+        return int(self.__self_node.split(':')[1])
 
     @replicated_sync
     def put(self, key: str, value: str) -> (str, str, int, int):

@@ -3,6 +3,7 @@ import re
 ENCODING_AND_DECODING_TYPE = 'utf-8'
 SERVER_DB_ADDRESS = '127.0.0.1'
 SERVER_DB_SOCKET_PORT = 40400
+DATABASE_PORTS_FILE = 'data_db/ports_dbs.txt'
 
 
 def check_string(text: str) -> bool:

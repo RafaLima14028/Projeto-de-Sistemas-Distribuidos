@@ -1,13 +1,80 @@
 import argparse
-from socket import socket
+import socket
 import threading
 import json
+import os
 
 from src.lmdbDB import Database
-from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT
+from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT, DATABASE_PORTS_FILE
+
+
+def write_port(port: int) -> None:
+    if port not in read_ports():
+        with open(DATABASE_PORTS_FILE, 'a') as file:
+            file.write(str(port) + '\n')
+
+
+def read_ports() -> list:
+    ports = []
+
+    if os.path.exists(DATABASE_PORTS_FILE):
+        with open(DATABASE_PORTS_FILE, 'r') as file:
+            for line in file:
+                port = int(line.strip())
+                ports.append(port)
+
+    return ports
+
+
+def remove_port(port: int) -> None:
+    if os.path.exists(DATABASE_PORTS_FILE):
+        with open(DATABASE_PORTS_FILE, 'w') as file:
+            for line in file:
+                port_line = int(line.strip())
+                if port == port_line:
+                    continue
+
+                file.write(line)
+
+
+def connect_other_ports(replica: Database) -> None:
+    if os.path.exists(DATABASE_PORTS_FILE):
+        with open(DATABASE_PORTS_FILE, 'r') as file:
+            for line in file:
+                port = int(line.strip())
+
+                if port != replica.get_port():
+                    replica.addNodeToCluster(f'{SERVER_DB_ADDRESS}:{port}')
+
+
+def manages_ports(ports_in_txt: [int], replica: Database) -> [int]:
+    ports_in_txt_tmp = read_ports()
+
+    # Check if any ports have been dropped
+    for port_tmp in ports_in_txt_tmp:
+        if port_tmp != replica.get_port():
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+
+            try:
+                sock.connect((SERVER_DB_ADDRESS, port_tmp))  # Connection Successful
+            except socket.error:
+                remove_port(port_tmp)
+            finally:
+                sock.close()
+
+    # Scans new port and connects
+    for port_tmp in ports_in_txt_tmp:
+        if port_tmp not in ports_in_txt:
+            replica.addNodeToCluster(f'{SERVER_DB_ADDRESS}:{port_tmp}')
+            ports_in_txt = ports_in_txt_tmp
+
+    return ports_in_txt_tmp
 
 
 def controller(replica: Database, conn: socket) -> None:
+    ports_in_txt = read_ports()
+
     while True:
         data = conn.recv(4120)
         msg = data.decode(ENCODING_AND_DECODING_TYPE)
@@ -15,6 +82,8 @@ def controller(replica: Database, conn: socket) -> None:
         function_name = ''
         resp = None
         response_msg = None
+
+        ports_in_txt = manages_ports(ports_in_txt, replica)
 
         if msg:
             response_msg = json.loads(msg)
@@ -103,28 +172,35 @@ def run(bd: str, port: int = None) -> None:
         case 'bd1':
             port = port + 1
             socket_port = SERVER_DB_SOCKET_PORT
+            write_port(port)
             pass
         case 'bd2':
             port = port + 2
             socket_port = SERVER_DB_SOCKET_PORT + 1
+            write_port(port)
             pass
         case 'bd3':
             port = port + 3
             socket_port = SERVER_DB_SOCKET_PORT + 2
+            write_port(port)
             pass
         case _:
             print(f'Invalid argument: {bd}')
             exit(1)
 
     bd_node = f'{SERVER_DB_ADDRESS}:{port}'
-
     replica = Database(bd_node, bd)
-    replica.addNodeToCluster(bd_node)
 
-    skt = socket()
+    print()
+    ports_in_txt = []
+    ports_in_txt = manages_ports(ports_in_txt, replica)
+    connect_other_ports(replica)
+
+    skt = socket.socket()
 
     skt.bind((SERVER_DB_ADDRESS, socket_port))
-    print((SERVER_DB_ADDRESS, socket_port))
+    print()
+    print(f'Database socket initialized at: {(SERVER_DB_ADDRESS, socket_port)}')
     skt.listen(30)
 
     while True:

@@ -19,6 +19,8 @@
 
 ### A fazer ainda (*temporário*)
 
+- Permitir o cache trabalhar com outras replicas além da 1 (db1), a porta é a 40400 que é referente ao
+socket da replica 1. Isso está no handlesJSON.
 - Implementar os novos testes
 - Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes
   - controllerDatabase.py aceita porta como argumento `--port [porta]`, porta default ainda é 39400
