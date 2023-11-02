@@ -22,13 +22,13 @@
 - [x] Permitir o cache trabalhar com outras replicas além da 1 (db1), a porta é a 40400 que é referente ao
 socket da replica 1. Isso está no handlesJSON.
 - [x] Remover a exceção gerada pelo handlesJSON, quando uma conexão é fechada inesperadamente no recv.
-- [x] Métodos do handlesJSON tentam refazer a conexão caso a réplica em uso falhe
-- [ ] Implementar os novos testes
-- [ ] Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes
-  - [ ] controllerDatabase.py aceita porta como argumento `--port [porta]`, porta default ainda é 39400
-- [ ] No servidor há algumas funções sem cache
+- [x] Métodos do handlesJSON tentam refazer a conexão caso a réplica em uso falhe.
+- [ ] Implementar os novos testes.
+- [ ] Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes.
+  - [ ] controllerDatabase.py aceita porta como argumento `--port [porta]`, porta default ainda é 39400.
+- [ ] No servidor há algumas funções sem cache.
 - [ ] Atualizar README.md com as instruções de compilação, inicialização e uso do controllerDatabase, servidor e cliente.
-- [ ] Definir argumentos para replica.sh / controllerDatabase.py
+- [ ] Definir argumentos para replica.sh / controllerDatabase.py.
 
 ### Métodos do cache implementados (*temporário*)
 
@@ -110,7 +110,8 @@ por meio de um JSON de envio e outro de resposta para o cache, esse envio e resp
 do socket. O JSON envio com o cache vai com a função de requisição e os dados que são necessários para a requisição
 no banco de dados, sendo enviado via a comunicação entre ambos os lados. Já o lado do banco de dados ao receber
 o JSON do cache, é verificado qual função que requisitou para saber qual será a resposta, ou seja, é atualiza o
-banco de dados e as informações são retornadas ao cache por meio de um JSON que é enviado por um socket.
+banco de dados e as informações são retornadas ao cache por meio de um JSON que é enviado por um socket. Caso a réplica
+em uso do cache falhe, tenta-se conectar as outras, mas se não houver nenhum é gerada uma exceção.
 
 ### Instalação e execução
 
@@ -132,4 +133,4 @@ chmod +x compile.sh
 
 [Parte 1 do Projeto](https://youtu.be/9ZDFBH2iPKQ)
 <br/>
-[Parte 2 do Projeto]()
+[Parte 2 do Projeto]() (**Em breve**)
