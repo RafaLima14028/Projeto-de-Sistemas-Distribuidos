@@ -7,9 +7,55 @@ from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_S
 class HandlesJsonCache:
     def __init__(self):
         self.sk = socket.socket()
-        self.sk.connect((SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT))
+
+        self.__connected = False
+        self.__socket_port = -1
+
+        self.__make_new_connection()
+
+    def __make_new_connection(self) -> int:
+        """"
+        Return Messages:
+             1: Connection Successfully
+            -1: You are already connected
+            -2: Tried a new connection, but it was not possible
+        """
+
+        if not self.__is_connected():
+            for i in range(3):
+                if not self.__connected:
+                    port = SERVER_DB_SOCKET_PORT + i
+
+                    try:
+                        self.sk.connect((SERVER_DB_ADDRESS, port))
+                        self.__connected = True
+                        self.__socket_port = port
+                        break
+                    except socket.error:
+                        pass
+
+            if not self.__connected and self.__socket_port > 0:
+                return 1
+            else:
+                return -2
+        else:
+            return -1
+
+    def __is_connected(self) -> bool:
+        if self.__connected and self.__socket_port > 0:
+            return True
+        else:
+            return False
 
     def Get(self, key: str, version: int = -1) -> (str, str, int):
+        if not self.__is_connected():
+            resp_conn = self.__make_new_connection()
+
+            if resp_conn == -2:
+                raise Exception(
+                    f'Error in handlesJSON Get: There is no replica online'
+                )
+
         msg = json.dumps(
             {
                 'function': 'get',
@@ -25,6 +71,11 @@ class HandlesJsonCache:
 
         data = json.loads(resp)
 
+        if 'error' in data:
+            raise Exception(
+                f'Error in handlesJSON Get: {str(data["error"])}'
+            )
+
         key_returned = data['key']
         value_returned = data['value_returned']
         version_returned = data['version_returned']
@@ -32,6 +83,14 @@ class HandlesJsonCache:
         return key_returned, value_returned, version_returned
 
     def GetRange(self, from_key: str, to_key: str, from_version: int = -1, to_version: int = -1) -> dict:
+        if not self.__is_connected():
+            resp_conn = self.__make_new_connection()
+
+            if resp_conn == -2:
+                raise Exception(
+                    f'Error in handlesJSON GetRange: There is no replica online'
+                )
+
         msg = json.dumps(
             {
                 'function': 'getRange',
@@ -48,9 +107,22 @@ class HandlesJsonCache:
 
         data = json.loads(resp)
 
+        if 'error' in data:
+            raise Exception(
+                f'Error in handlesJSON GetRange: {str(data["error"])}'
+            )
+
         return data
 
     def GetAll(self, key: str, version: int = -1) -> (str, str, int):
+        if not self.__is_connected():
+            resp_conn = self.__make_new_connection()
+
+            if resp_conn == -2:
+                raise Exception(
+                    f'Error in handlesJSON GetAll: There is no replica online'
+                )
+
         msg = json.dumps(
             {
                 'function': 'getAll',
@@ -66,6 +138,11 @@ class HandlesJsonCache:
 
         data = json.loads(resp)
 
+        if 'error' in data:
+            raise Exception(
+                f'Error in handlesJSON GetAll: {str(data["error"])}'
+            )
+
         key_returned = data['key']
         value_returned = data['value_returned']
         version_returned = data['version_returned']
@@ -73,6 +150,14 @@ class HandlesJsonCache:
         return key_returned, value_returned, version_returned
 
     def Put(self, key: str, value: str) -> (str, str, int, int):
+        if not self.__is_connected():
+            resp_conn = self.__make_new_connection()
+
+            if resp_conn == -2:
+                raise Exception(
+                    f'Error in handlesJSON Put: There is no replica online'
+                )
+
         msg = json.dumps(
             {
                 'function': 'put',
@@ -88,6 +173,11 @@ class HandlesJsonCache:
 
         data = json.loads(resp)
 
+        if 'error' in data:
+            raise Exception(
+                f'Error in handlesJSON Put: {str(data["error"])}'
+            )
+
         key_returned = data['key']
         old_value = data['old_value']
         old_version = data['old_version']
@@ -96,6 +186,14 @@ class HandlesJsonCache:
         return key_returned, old_value, old_version, new_version
 
     def PutAll(self, key: str, value: str) -> (str, str, int, int):
+        if not self.__is_connected():
+            resp_conn = self.__make_new_connection()
+
+            if resp_conn == -2:
+                raise Exception(
+                    f'Error in handlesJSON PutAll: There is no replica online'
+                )
+
         msg = json.dumps(
             {
                 'function': 'putAll',
@@ -111,6 +209,11 @@ class HandlesJsonCache:
 
         data = json.loads(resp)
 
+        if 'error' in data:
+            raise Exception(
+                f'Error in handlesJSON PutAll: {str(data["error"])}'
+            )
+
         key_returned = data['key']
         old_value = data['old_value']
         old_version = data['old_version']
@@ -119,6 +222,14 @@ class HandlesJsonCache:
         return key_returned, old_value, old_version, new_version
 
     def Del(self, key: str) -> (str, str, int):
+        if not self.__is_connected():
+            resp_conn = self.__make_new_connection()
+
+            if resp_conn == -2:
+                raise Exception(
+                    f'Error in handlesJSON Del: There is no replica online'
+                )
+
         msg = json.dumps(
             {
                 'function': 'del',
@@ -134,6 +245,11 @@ class HandlesJsonCache:
 
         data = json.loads(resp)
 
+        if 'error' in data:
+            raise Exception(
+                f'Error in handlesJSON Del: {str(data["error"])}'
+            )
+
         key_returned = data['key']
         last_value = data['last_value']
         last_version = data['last_version']
@@ -141,6 +257,14 @@ class HandlesJsonCache:
         return key_returned, last_value, last_version
 
     def DelRange(self, from_key: str, to_key: str) -> dict:
+        if not self.__is_connected():
+            resp_conn = self.__make_new_connection()
+
+            if resp_conn == -2:
+                raise Exception(
+                    f'Error in handlesJSON DelRange: There is no replica online'
+                )
+
         msg = json.dumps(
             {
                 'function': 'delRange',
@@ -155,9 +279,22 @@ class HandlesJsonCache:
 
         data = json.loads(resp)
 
+        if 'error' in data:
+            raise Exception(
+                f'Error in handlesJSON DelRange: {str(data["error"])}'
+            )
+
         return data
 
     def DelAll(self, key: str) -> (str, str, int):
+        if not self.__is_connected():
+            resp_conn = self.__make_new_connection()
+
+            if resp_conn == -2:
+                raise Exception(
+                    f'Error in handlesJSON DelAll: There is no replica online'
+                )
+
         msg = json.dumps(
             {
                 'function': 'delAll',
@@ -173,6 +310,11 @@ class HandlesJsonCache:
 
         data = json.loads(resp)
 
+        if 'error' in data:
+            raise Exception(
+                f'Error in handlesJSON DelAll: {str(data["error"])}'
+            )
+
         key_returned = data['key']
         value_returned = data['last_value']
         version_returned = data['last_version']
@@ -180,6 +322,14 @@ class HandlesJsonCache:
         return key_returned, value_returned, version_returned
 
     def Trim(self, key: str) -> (str, str, int):
+        if not self.__is_connected():
+            resp_conn = self.__make_new_connection()
+
+            if resp_conn == -2:
+                raise Exception(
+                    f'Error in handlesJSON Trim: There is no replica online'
+                )
+
         msg = json.dumps(
             {
                 'function': 'trim',
@@ -194,6 +344,11 @@ class HandlesJsonCache:
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)
+
+        if 'error' in data:
+            raise Exception(
+                f'Error in handlesJSON Trim: {str(data["error"])}'
+            )
 
         key_returned = data['key']
         last_value = data['last_value']

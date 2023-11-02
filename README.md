@@ -19,15 +19,16 @@
 
 ### A fazer ainda (*temporário*)
 
-- Permitir o cache trabalhar com outras replicas além da 1 (db1), a porta é a 40400 que é referente ao
+- [x] Permitir o cache trabalhar com outras replicas além da 1 (db1), a porta é a 40400 que é referente ao
 socket da replica 1. Isso está no handlesJSON.
-- Implementar os novos testes
-- Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes
-  - controllerDatabase.py aceita porta como argumento `--port [porta]`, porta default ainda é 39400
-- No servidor há algumas funções sem cache
-- Atualizar README.md com as instruções de compilação,
-  inicialização e uso do controllerDatabase, servidor e cliente.
-- Definir argumentos para replica.sh / controllerDatabase.py
+- [x] Remover a exceção gerada pelo handlesJSON, quando uma conexão é fechada inesperadamente no recv.
+- [x] Métodos do handlesJSON tentam refazer a conexão caso a réplica em uso falhe
+- [ ] Implementar os novos testes
+- [ ] Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes
+  - [ ] controllerDatabase.py aceita porta como argumento `--port [porta]`, porta default ainda é 39400
+- [ ] No servidor há algumas funções sem cache
+- [ ] Atualizar README.md com as instruções de compilação, inicialização e uso do controllerDatabase, servidor e cliente.
+- [ ] Definir argumentos para replica.sh / controllerDatabase.py
 
 ### Métodos do cache implementados (*temporário*)
 

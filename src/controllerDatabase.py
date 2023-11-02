@@ -28,27 +28,22 @@ def read_ports() -> list:
 
 def remove_port(port: int) -> None:
     if os.path.exists(DATABASE_PORTS_FILE):
-        with open(DATABASE_PORTS_FILE, 'w') as file:
-            for line in file:
-                port_line = int(line.strip())
-                if port == port_line:
-                    continue
+        lines = None
 
-                file.write(line)
-
-
-def connect_other_ports(replica: Database) -> None:
-    if os.path.exists(DATABASE_PORTS_FILE):
         with open(DATABASE_PORTS_FILE, 'r') as file:
-            for line in file:
-                port = int(line.strip())
+            lines = file.readlines()
 
-                if port != replica.get_port():
-                    replica.addNodeToCluster(f'{SERVER_DB_ADDRESS}:{port}')
+        with open(DATABASE_PORTS_FILE, 'w') as file:
+            for line in lines:
+                port_line = int(line.strip())
+
+                if port != port_line:
+                    file.write(line)
 
 
 def manages_ports(ports_in_txt: [int], replica: Database) -> [int]:
     ports_in_txt_tmp = read_ports()
+    error_in_port = []
 
     # Check if any ports have been dropped
     for port_tmp in ports_in_txt_tmp:
@@ -60,23 +55,35 @@ def manages_ports(ports_in_txt: [int], replica: Database) -> [int]:
                 sock.connect((SERVER_DB_ADDRESS, port_tmp))  # Connection Successful
             except socket.error:
                 remove_port(port_tmp)
+                error_in_port.append(port_tmp)
             finally:
                 sock.close()
 
     # Scans new port and connects
     for port_tmp in ports_in_txt_tmp:
-        if port_tmp not in ports_in_txt:
-            replica.addNodeToCluster(f'{SERVER_DB_ADDRESS}:{port_tmp}')
-            ports_in_txt = ports_in_txt_tmp
+        if port_tmp != replica.get_port():
+            if port_tmp not in ports_in_txt and port_tmp not in error_in_port:
+                replica.addNodeToCluster(f'{SERVER_DB_ADDRESS}:{port_tmp}')
+                print(f'Connected with {SERVER_DB_ADDRESS}:{port_tmp}')
+                ports_in_txt = ports_in_txt_tmp
 
-    return ports_in_txt_tmp
+    return read_ports()
 
 
-def controller(replica: Database, conn: socket) -> None:
-    ports_in_txt = read_ports()
+def controller(replica: Database, conn: socket, addr: tuple) -> None:
+    print()
+    print(f'Connected with the socket: {addr}')
+
+    ports_in_txt = []
 
     while True:
-        data = conn.recv(4120)
+        try:
+            data = conn.recv(4120)
+        except ConnectionResetError:
+            print(f'Connection terminated with the {addr}')
+            conn.close()
+            break
+
         msg = data.decode(ENCODING_AND_DECODING_TYPE)
 
         function_name = ''
@@ -157,7 +164,12 @@ def controller(replica: Database, conn: socket) -> None:
                 }
             )
         else:
-            resp = json.dumps({'error': 'not exist this function'})
+            resp = json.dumps(
+                {
+                    'error':
+                        'not exist this function'
+                }
+            )
 
         conn.send(resp.encode(ENCODING_AND_DECODING_TYPE))
 
@@ -191,10 +203,7 @@ def run(bd: str, port: int = None) -> None:
     bd_node = f'{SERVER_DB_ADDRESS}:{port}'
     replica = Database(bd_node, bd)
 
-    print()
-    ports_in_txt = []
-    ports_in_txt = manages_ports(ports_in_txt, replica)
-    connect_other_ports(replica)
+    manages_ports([], replica)
 
     skt = socket.socket()
 
@@ -205,7 +214,7 @@ def run(bd: str, port: int = None) -> None:
 
     while True:
         conn, addr = skt.accept()
-        threading.Thread(target=controller, args=(replica, conn)).start()
+        threading.Thread(target=controller, args=(replica, conn, addr)).start()
 
 
 if __name__ == '__main__':

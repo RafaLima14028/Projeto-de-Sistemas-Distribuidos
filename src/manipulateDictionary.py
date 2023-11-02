@@ -25,7 +25,7 @@ class ManipulateDictionary:
 
         return False
 
-    def __updateCache(self, key: str, value: str, version: int):
+    def __updateCache(self, key: str, value: str, version: int) -> None:
         if value == '' and version <= 0:
             if key in self.__dictionary:
                 del self.__dictionary[key]

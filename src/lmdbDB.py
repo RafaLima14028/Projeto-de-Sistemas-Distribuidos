@@ -3,9 +3,8 @@ from pysyncobj import SyncObj, SyncObjConf, replicated_sync
 import struct
 import pickle
 from time import time, sleep
-import os
 
-from src.utils import ENCODING_AND_DECODING_TYPE, DATABASE_PORTS_FILE
+from src.utils import ENCODING_AND_DECODING_TYPE
 
 
 class Database(SyncObj):
@@ -23,9 +22,12 @@ class Database(SyncObj):
             path=self.__path_database,
             sync=True,
             writemap=True,
+            metasync=True,
             map_async=True,
             readonly=False,
-            max_readers=10
+            lock=True,
+            max_readers=3,
+            max_dbs=3
         )
 
         sleep(2)
