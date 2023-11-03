@@ -26,7 +26,7 @@ socket da replica 1. Isso está no handlesJSON.
 - [ ] Implementar os novos testes.
 - [ ] Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes.
   - [ ] controllerDatabase.py aceita porta como argumento `--port [porta]`, porta default ainda é 39400.
-- [ ] No servidor há algumas funções sem cache.
+- [x] No servidor há algumas funções sem cache.
 - [ ] Atualizar README.md com as instruções de compilação, inicialização e uso do controllerDatabase, servidor e cliente.
 - [ ] Definir argumentos para replica.sh / controllerDatabase.py.
 
@@ -37,7 +37,7 @@ socket da replica 1. Isso está no handlesJSON.
 - [x] getRangeByKeyVersion
 - [x] trim
 - [x] delete
-- [ ] delRange
+- [x] delRange
 
 ### Regras para atualizar o cache (*temporário*)
 
@@ -58,7 +58,9 @@ socket da replica 1. Isso está no handlesJSON.
 - **GetRange**: Verifica se existe ou não no cache os dados. Se os dados existirem, verifica
   se está no tempo válido e retorna, senão atualiza o cache e retorna.
   Se os dados não existirem, verifica se está no tempo válido e retorna, senão atualiza o cache e retorna.
-- **DelRange**:
+- **DelRange**: Busca a chave no cache usando a função Get e
+  executa a operação de excluir todas as chaves do cache e depois executa no
+  banco de dados também.
 
 ### Requisitos
 
@@ -133,4 +135,4 @@ chmod +x compile.sh
 
 [Parte 1 do Projeto](https://youtu.be/9ZDFBH2iPKQ)
 <br/>
-[Parte 2 do Projeto]() (**Em breve**)
+[Parte 2 do Projeto]() **(Em breve)**

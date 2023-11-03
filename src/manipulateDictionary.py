@@ -177,23 +177,9 @@ class ManipulateDictionary:
         return key_cache_returned, value_cache_returned, verion_cache_returned
 
     def delRange(self, start_key: str, end_key: str) -> dict:
-        values_in_range = dict()
-        data_guard = True
+        keys_in_range = self.getRangeByKeyVersion(start_key, end_key)
 
-        for k, list_values in self.__dictionary.items():
-            if start_key <= k <= end_key:
-                data_guard = True
-
-                for version_value, value_value in list_values:
-                    if data_guard:
-                        if k in values_in_range:
-                            values_in_range[k].append((version_value, value_value))
-                        else:
-                            values_in_range[k] = [(version_value, value_value)]
-
-                        data_guard = False
-
-        for key in list(values_in_range.keys()):
+        for key in list(keys_in_range.keys()):
             del self.__dictionary[key]
 
-        return values_in_range
+        return keys_in_range
