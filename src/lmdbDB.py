@@ -27,7 +27,6 @@ class Database(SyncObj):
             metasync=True,
             map_async=True,
             readonly=False,
-            lock=True,
             max_readers=3,
             max_dbs=3
         )
@@ -36,14 +35,6 @@ class Database(SyncObj):
         print(f'The nodes are synchronized: {self.isReady()}')
         print(f'The node {selfNode} has been successfully initialized...')
         print()
-
-    # @staticmethod
-    # def __reduced_time(time_int_value: int) -> float:
-    #     return float(time_int_value / TIME_FACTOR)
-    #
-    # @staticmethod
-    # def __increased_time(time_float_value: float) -> int:
-    #     return int(time_float_value / TIME_FACTOR)
 
     def get_port(self) -> int:
         return int(self.__self_node.split(':')[1])
@@ -56,12 +47,10 @@ class Database(SyncObj):
         value_bytes = value.encode(ENCODING_AND_DECODING_TYPE)
 
         new_version = int(time())
-        new_version_bytes = struct.pack('>Q', new_version)
-        # new_version = float(int(time()) / TIME_FACTOR)
-        # new_version_bytes = struct.pack('d', new_version)
+        new_version_bytes = struct.pack('d', float(new_version / TIME_FACTOR))
 
-        with self.__env.begin(write=True) as txn:
-            try:
+        try:
+            with self.__env.begin(write=True) as txn:
                 with txn.cursor() as cursor:
                     cursor.get(key_bytes, default=None)
                     existing_values = cursor.value()
@@ -73,9 +62,10 @@ class Database(SyncObj):
 
                     existing_values.append((new_version_bytes, value_bytes))
                     txn.put(key_bytes, pickle.dumps(existing_values))
-            except lmdb.Error as e:
-                txn.abort()
-                raise Exception(f'A database insertion failure occurred: {str(e)}')
+
+                txn.commit()
+        except lmdb.Error as e:
+            raise Exception(f'A database insertion failure occurred: {str(e)}')
 
         return key, old_value_bytes, old_version, new_version
 
@@ -83,8 +73,8 @@ class Database(SyncObj):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
         values = []
 
-        with self.__env.begin(write=False) as txn:
-            try:
+        try:
+            with self.__env.begin(write=False) as txn:
                 cursor = txn.cursor()
                 cursor.get(key_bytes, default=None)
                 existing_values = cursor.value()
@@ -93,12 +83,10 @@ class Database(SyncObj):
                     existing_values = pickle.loads(existing_values)
 
                     for version_bytes, value_bytes in existing_values:
-                        version = struct.unpack('>Q', version_bytes)[0]
-                        # version = struct.unpack('d', version_bytes)[0]
-                        # version = int(version * 10000)
-                        values.append((value_bytes.decode(ENCODING_AND_DECODING_TYPE), version))
-            except lmdb.Error as e:
-                raise Exception(f'Failed to fetch data from the database: {str(e)}')
+                        version = struct.unpack('d', version_bytes)[0]
+                        values.append((value_bytes.decode(ENCODING_AND_DECODING_TYPE), int(version * 10000)))
+        except lmdb.Error as e:
+            raise Exception(f'Failed to fetch data from the database: {str(e)}')
 
         return values
 
@@ -137,8 +125,8 @@ class Database(SyncObj):
         values_in_range = dict()
 
         if start_version <= 0 or end_version <= 0:
-            with self.__env.begin() as tnx:
-                try:
+            try:
+                with self.__env.begin(write=False) as tnx:
                     for key, values in tnx.cursor():
                         key = key.decode(ENCODING_AND_DECODING_TYPE)
                         _, value_returned, version_returned = self.get(key)
@@ -147,14 +135,14 @@ class Database(SyncObj):
                             values_in_range[key].append((version_returned, value_returned))
                         else:
                             values_in_range[key] = [(version_returned, value_returned)]
-                except lmdb.Error as e:
-                    raise Exception(f'Database get in range failed: {str(e)}')
+            except lmdb.Error as e:
+                raise Exception(f'Database get in range failed: {str(e)}')
         else:
             max_request_version = max(start_version, end_version)
 
             if start_version <= 0 or end_version <= 0:
-                with self.__env.begin() as tnx:
-                    try:
+                try:
+                    with self.__env.begin(write=False) as tnx:
                         for key, values in tnx.cursor():
                             key = key.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -165,8 +153,8 @@ class Database(SyncObj):
                                             values_in_range[key].append((version, value))
                                         else:
                                             values_in_range[key] = [(version, value)]
-                    except lmdb.Error as e:
-                        raise Exception(f'Database get in range failed: {str(e)}')
+                except lmdb.Error as e:
+                    raise Exception(f'Database get in range failed: {str(e)}')
 
         return values_in_range
 
@@ -176,12 +164,12 @@ class Database(SyncObj):
 
         _, last_value, last_version = self.get(key)
 
-        with self.__env.begin(write=True) as txn:
-            try:
+        try:
+            with self.__env.begin(write=True) as txn:
                 txn.delete(key_bytes)
-            except lmdb.Error as e:
-                txn.abort()
-                raise Exception(f'Database delete failed: {str(e)}')
+                txn.commit()
+        except lmdb.Error as e:
+            raise Exception(f'Database delete failed: {str(e)}')
 
         if last_value == '' and last_version <= 0:
             return '', '', -1
@@ -192,8 +180,8 @@ class Database(SyncObj):
     def delRange(self, start_key: str, end_key: str) -> dict:
         values_in_range = dict()
 
-        with self.__env.begin(write=True) as txn:
-            try:
+        try:
+            with self.__env.begin(write=True) as txn:
                 cursor = txn.cursor()
 
                 for key, value in cursor:
@@ -208,9 +196,10 @@ class Database(SyncObj):
                             values_in_range[key_str] = [(last_version, last_value)]
 
                         cursor.delete()
-            except lmdb.Error as e:
-                txn.abort()
-                raise Exception(f'Database delete in range failed: {str(e)}')
+
+                txn.commit()
+        except lmdb.Error as e:
+            raise Exception(f'Database delete in range failed: {str(e)}')
 
         return values_in_range
 
@@ -220,22 +209,22 @@ class Database(SyncObj):
 
         _, last_value, last_version = self.get(key)
 
-        with self.__env.begin(write=True) as txn:
-            try:
+        try:
+            with self.__env.begin(write=True) as txn:
                 txn.delete(key_bytes)
-            except lmdb.Error as e:
-                txn.abort()
-                raise Exception(f'Database delete failed: {str(e)}')
+                txn.commit()
+        except lmdb.Error as e:
+            raise Exception(f'Database delete failed: {str(e)}')
 
         if last_value == '' and last_version <= 0:
             key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
             value_bytes = last_value.encode(ENCODING_AND_DECODING_TYPE)
 
-            new_version = last_version
-            new_version_bytes = struct.pack('>Q', new_version)
+            new_version = float(last_version / TIME_FACTOR)
+            new_version_bytes = struct.pack('d', new_version)
 
-            with self.__env.begin(write=True) as txn:
-                try:
+            try:
+                with self.__env.begin(write=True) as txn:
                     cursor = txn.cursor()
                     cursor.get(key_bytes, default=None)
                     existing_values = cursor.value()
@@ -247,20 +236,22 @@ class Database(SyncObj):
 
                     existing_values.append((new_version_bytes, value_bytes))
                     txn.put(key_bytes, pickle.dumps(existing_values))
-                except lmdb.Error as e:
-                    txn.abort()
-                    raise Exception(f'A database trim failure occurred: {str(e)}')
+
+                    txn.commit()
+            except lmdb.Error as e:
+                raise Exception(f'A database trim failure occurred: {str(e)}')
 
             return key, last_value, last_version
         else:
             key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
             value_bytes = last_value.encode(ENCODING_AND_DECODING_TYPE)
 
-            new_version = last_version
-            new_version_bytes = struct.pack('>Q', new_version)
+            new_version = int(time())
+            new_version_with_time_factor = float(new_version / TIME_FACTOR)
+            new_version_bytes = struct.pack('d', new_version_with_time_factor)
 
-            with self.__env.begin(write=True) as txn:
-                try:
+            try:
+                with self.__env.begin(write=True) as txn:
                     cursor = txn.cursor()
                     cursor.get(key_bytes, default=None)
                     existing_values = cursor.value()
@@ -272,8 +263,9 @@ class Database(SyncObj):
 
                     existing_values.append((new_version_bytes, value_bytes))
                     txn.put(key_bytes, pickle.dumps(existing_values))
-                except lmdb.Error as e:
-                    txn.abort()
-                    raise Exception(f'A database trim failure occurred: {str(e)}')
+
+                    txn.commit()
+            except lmdb.Error as e:
+                raise Exception(f'A database trim failure occurred: {str(e)}')
 
             return key, last_value, new_version

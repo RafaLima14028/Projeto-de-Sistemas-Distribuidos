@@ -6,14 +6,12 @@ from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_S
 
 class HandlesJsonCache:
     def __init__(self):
-        self.sk = socket.socket()
+        self.__sk = socket.socket()
 
         self.__connected = False
         self.__socket_port = -1
 
-        self.__make_new_connection()
-
-        print(f'The cache is connected with the replica: {SERVER_DB_ADDRESS}:{self.__socket_port}')
+        # self.__make_new_connection()
 
     def __make_new_connection(self) -> int:
         """"
@@ -24,22 +22,24 @@ class HandlesJsonCache:
         """
 
         if not self.__is_connected():
-            for i in range(3):
-                if not self.__connected:
-                    port = SERVER_DB_SOCKET_PORT + i
+            ports_range = [
+                SERVER_DB_SOCKET_PORT, SERVER_DB_SOCKET_PORT + 1, SERVER_DB_SOCKET_PORT + 2
+            ]
 
-                    try:
-                        self.sk.connect((SERVER_DB_ADDRESS, port))
-                        self.__connected = True
-                        self.__socket_port = port
-                        break
-                    except socket.error:
-                        pass
+            for port in ports_range:
+                self.__sk = socket.socket()
 
-            if not self.__connected and self.__socket_port > 0:
-                return 1
-            else:
-                return -2
+                try:
+                    self.__sk.connect((SERVER_DB_ADDRESS, port))
+                    self.__set_is_connected(port)
+
+                    print(f'The cache is connected with the replica: {SERVER_DB_ADDRESS}:{self.__socket_port}')
+                    return 1
+                except socket.error:
+                    self.__set_is_unconnected()
+                    self.__sk.close()
+
+            return -2
         else:
             return -1
 
@@ -49,11 +49,17 @@ class HandlesJsonCache:
         else:
             return False
 
+    def __set_is_unconnected(self) -> None:
+        self.__connected = False
+        self.__socket_port = -1
+
+    def __set_is_connected(self, port: int) -> None:
+        self.__connected = True
+        self.__socket_port = port
+
     def Get(self, key: str, version: int = -1) -> (str, str, int):
         if not self.__is_connected():
-            resp_conn = self.__make_new_connection()
-
-            if resp_conn == -2:
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON Get: There is no replica online'
                 )
@@ -67,24 +73,35 @@ class HandlesJsonCache:
             }
         )
 
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        try:
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        except socket.error:
+            self.__set_is_unconnected()
+
+            if self.__make_new_connection() == -2:
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
 
         resp = None
 
         try:
-            resp = self.sk.recv(16480)
-        except ConnectionResetError:
-            resp_new_connection = self.__make_new_connection()
+            resp = self.__sk.recv(16480)
+        except socket.error:
+            self.__set_is_unconnected()
 
-            if resp_new_connection < 0:
-                self.sk.close()
+            if self.__make_new_connection() == -2:
+                self.__sk.close()
 
                 raise Exception(
                     f'Error in handlesJSON in Get: The connection was '
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.sk.recv(16880)
+            resp = self.__sk.recv(16880)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -103,9 +120,7 @@ class HandlesJsonCache:
 
     def GetRange(self, from_key: str, to_key: str, from_version: int = -1, to_version: int = -1) -> dict:
         if not self.__is_connected():
-            resp_conn = self.__make_new_connection()
-
-            if resp_conn == -2:
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON GetRange: There is no replica online'
                 )
@@ -120,24 +135,33 @@ class HandlesJsonCache:
             }
         )
 
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        try:
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        except socket.error:
+            self.__set_is_unconnected()
+
+            if self.__make_new_connection() == -2:
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
 
         resp = None
 
         try:
-            resp = self.sk.recv(16480)
-        except ConnectionResetError:
-            resp_new_connection = self.__make_new_connection()
+            resp = self.__sk.recv(16480)
+        except socket.error:
+            self.__set_is_unconnected()
 
-            if resp_new_connection < 0:
-                self.sk.close()
-
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON in GetRange: The connection was '
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.sk.recv(16880)
+            resp = self.__sk.recv(16880)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -152,9 +176,7 @@ class HandlesJsonCache:
 
     def GetAll(self, key: str, version: int = -1) -> (str, str, int):
         if not self.__is_connected():
-            resp_conn = self.__make_new_connection()
-
-            if resp_conn == -2:
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON GetAll: There is no replica online'
                 )
@@ -168,24 +190,33 @@ class HandlesJsonCache:
             }
         )
 
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        try:
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        except socket.error:
+            self.__set_is_unconnected()
+
+            if self.__make_new_connection() == -2:
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
 
         resp = None
 
         try:
-            resp = self.sk.recv(16480)
-        except ConnectionResetError:
-            resp_new_connection = self.__make_new_connection()
+            resp = self.__sk.recv(16480)
+        except socket.error:
+            self.__set_is_unconnected()
 
-            if resp_new_connection < 0:
-                self.sk.close()
-
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON in GetAll: The connection was '
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.sk.recv(16880)
+            resp = self.__sk.recv(16880)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -204,9 +235,7 @@ class HandlesJsonCache:
 
     def Put(self, key: str, value: str) -> (str, str, int, int):
         if not self.__is_connected():
-            resp_conn = self.__make_new_connection()
-
-            if resp_conn == -2:
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON Put: There is no replica online'
                 )
@@ -220,24 +249,33 @@ class HandlesJsonCache:
             }
         )
 
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        try:
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        except socket.error:
+            self.__set_is_unconnected()
+
+            if self.__make_new_connection() == -2:
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
 
         resp = None
 
         try:
-            resp = self.sk.recv(16480)
-        except ConnectionResetError:
-            resp_new_connection = self.__make_new_connection()
+            resp = self.__sk.recv(16480)
+        except socket.error:
+            self.__set_is_unconnected()
 
-            if resp_new_connection < 0:
-                self.sk.close()
-
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON in Put: The connection was '
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.sk.recv(16880)
+            resp = self.__sk.recv(16880)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -257,9 +295,7 @@ class HandlesJsonCache:
 
     def PutAll(self, key: str, value: str) -> (str, str, int, int):
         if not self.__is_connected():
-            resp_conn = self.__make_new_connection()
-
-            if resp_conn == -2:
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON PutAll: There is no replica online'
                 )
@@ -273,24 +309,33 @@ class HandlesJsonCache:
             }
         )
 
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        try:
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        except socket.error:
+            self.__set_is_unconnected()
+
+            if self.__make_new_connection() == -2:
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
 
         resp = None
 
         try:
-            resp = self.sk.recv(16480)
-        except ConnectionResetError:
-            resp_new_connection = self.__make_new_connection()
+            resp = self.__sk.recv(16480)
+        except socket.error:
+            self.__set_is_unconnected()
 
-            if resp_new_connection < 0:
-                self.sk.close()
-
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON in PutAll: The connection was '
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.sk.recv(16880)
+            resp = self.__sk.recv(16880)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -310,9 +355,7 @@ class HandlesJsonCache:
 
     def Del(self, key: str) -> (str, str, int):
         if not self.__is_connected():
-            resp_conn = self.__make_new_connection()
-
-            if resp_conn == -2:
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON Del: There is no replica online'
                 )
@@ -326,24 +369,33 @@ class HandlesJsonCache:
             }
         )
 
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        try:
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        except socket.error:
+            self.__set_is_unconnected()
+
+            if self.__make_new_connection() == -2:
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
 
         resp = None
 
         try:
-            resp = self.sk.recv(16480)
-        except ConnectionResetError:
-            resp_new_connection = self.__make_new_connection()
+            resp = self.__sk.recv(16480)
+        except socket.error:
+            self.__set_is_unconnected()
 
-            if resp_new_connection < 0:
-                self.sk.close()
-
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON in Del: The connection was '
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.sk.recv(16880)
+            resp = self.__sk.recv(16880)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -362,9 +414,7 @@ class HandlesJsonCache:
 
     def DelRange(self, from_key: str, to_key: str) -> dict:
         if not self.__is_connected():
-            resp_conn = self.__make_new_connection()
-
-            if resp_conn == -2:
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON DelRange: There is no replica online'
                 )
@@ -377,24 +427,33 @@ class HandlesJsonCache:
             }
         )
 
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        try:
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        except socket.error:
+            self.__set_is_unconnected()
+
+            if self.__make_new_connection() == -2:
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
 
         resp = None
 
         try:
-            resp = self.sk.recv(16480)
-        except ConnectionResetError:
-            resp_new_connection = self.__make_new_connection()
+            resp = self.__sk.recv(16480)
+        except socket.error:
+            self.__set_is_unconnected()
 
-            if resp_new_connection < 0:
-                self.sk.close()
-
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON in DelRange: The connection was '
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.sk.recv(16880)
+            resp = self.__sk.recv(16880)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -409,9 +468,7 @@ class HandlesJsonCache:
 
     def DelAll(self, key: str) -> (str, str, int):
         if not self.__is_connected():
-            resp_conn = self.__make_new_connection()
-
-            if resp_conn == -2:
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON DelAll: There is no replica online'
                 )
@@ -425,24 +482,33 @@ class HandlesJsonCache:
             }
         )
 
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        try:
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        except socket.error:
+            self.__set_is_unconnected()
+
+            if self.__make_new_connection() == -2:
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
 
         resp = None
 
         try:
-            resp = self.sk.recv(16480)
-        except ConnectionResetError:
-            resp_new_connection = self.__make_new_connection()
+            resp = self.__sk.recv(16480)
+        except socket.error:
+            self.__set_is_unconnected()
 
-            if resp_new_connection < 0:
-                self.sk.close()
-
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON in DelAll: The connection was '
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.sk.recv(16880)
+            resp = self.__sk.recv(16880)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -461,9 +527,7 @@ class HandlesJsonCache:
 
     def Trim(self, key: str) -> (str, str, int):
         if not self.__is_connected():
-            resp_conn = self.__make_new_connection()
-
-            if resp_conn == -2:
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON Trim: There is no replica online'
                 )
@@ -477,24 +541,33 @@ class HandlesJsonCache:
             }
         )
 
-        self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        try:
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
+        except socket.error:
+            self.__set_is_unconnected()
+
+            if self.__make_new_connection() == -2:
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            self.__sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
 
         resp = None
 
         try:
-            resp = self.sk.recv(16480)
-        except ConnectionResetError:
-            resp_new_connection = self.__make_new_connection()
+            resp = self.__sk.recv(16480)
+        except socket.error:
+            self.__set_is_unconnected()
 
-            if resp_new_connection < 0:
-                self.sk.close()
-
+            if self.__make_new_connection() == -2:
                 raise Exception(
                     f'Error in handlesJSON in Trim: The connection was '
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.sk.recv(16880)
+            resp = self.__sk.recv(16880)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 

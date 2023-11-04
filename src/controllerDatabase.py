@@ -10,25 +10,37 @@ from src.utils import (ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS,
                        SERVER_DB_SOCKET_PORT, DATABASE_PORTS_FILE)
 
 
-def write_port(port: int) -> None:
-    if port not in read_ports():
+def write_port(port_db: int, port_socket: int) -> None:
+    if port_db not in read_ports_db() and port_socket not in read_ports_socket():
         with open(DATABASE_PORTS_FILE, 'a') as file:
-            file.write(str(port) + '\n')
+            file.write(str(port_db) + '-' + str(port_socket) + '\n')
 
 
-def read_ports() -> list:
+def read_ports_db() -> list:
     ports = []
 
     if os.path.exists(DATABASE_PORTS_FILE):
         with open(DATABASE_PORTS_FILE, 'r') as file:
             for line in file:
-                port = int(line.strip())
+                port = int(line.split('-')[0])
                 ports.append(port)
 
     return ports
 
 
-def remove_port(port: int) -> None:
+def read_ports_socket() -> list:
+    ports = []
+
+    if os.path.exists(DATABASE_PORTS_FILE):
+        with open(DATABASE_PORTS_FILE, 'r') as file:
+            for line in file:
+                port = int(line.split('-')[1].split('\n')[0])
+                ports.append(port)
+
+    return ports
+
+
+def remove_port(port_db: int, port_socket: int) -> None:
     if os.path.exists(DATABASE_PORTS_FILE):
         lines = None
 
@@ -37,52 +49,66 @@ def remove_port(port: int) -> None:
 
         with open(DATABASE_PORTS_FILE, 'w') as file:
             for line in lines:
-                port_line = int(line.strip())
+                line_split = line.split('-')
+                port_line_db = int(line_split[0])
+                port_line_socket = int(line_split[1].split('\n')[0])
 
-                if port != port_line:
+                if port_line_socket != port_socket and port_line_db != port_db:
                     file.write(line)
 
 
-def manages_ports(ports_in_txt: [int], replica: Database) -> [int]:
-    ports_in_txt_tmp = read_ports()
+def manages_ports(replica: Database) -> None:
     error_in_port = []
 
     # Check if any ports have been dropped
-    for port_tmp in ports_in_txt_tmp:
-        if port_tmp != replica.get_port():
+    ports_range_socket = read_ports_socket()
+    ports_range_dbs = read_ports_db()
+
+    for port_socket, port_db in zip(ports_range_socket, ports_range_dbs):
+        if port_db != replica.get_port():
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1)
 
             try:
-                sock.connect((SERVER_DB_ADDRESS, port_tmp))  # Connection Successful
+                sock.connect((SERVER_DB_ADDRESS, port_socket))
             except socket.error:
-                remove_port(port_tmp)
-                error_in_port.append(port_tmp)
+                try:
+                    replica.removeNodeFromCluster(f'{SERVER_DB_ADDRESS}:{port_db}')
+                except Exception:
+                    pass
+
+                remove_port(port_db, port_socket)
+                error_in_port.append(port_db)
+                print(f'The node {SERVER_DB_ADDRESS}:{port_socket} connection dropped')
             finally:
                 sock.close()
 
-    # Scans new port and connects
-    for port_tmp in ports_in_txt_tmp:
-        if port_tmp != replica.get_port():
-            if port_tmp not in ports_in_txt and port_tmp not in error_in_port:
-                replica.addNodeToCluster(f'{SERVER_DB_ADDRESS}:{port_tmp}')
-                sleep(2)
-                print(f'Connected with {SERVER_DB_ADDRESS}:{port_tmp}')
-                ports_in_txt = ports_in_txt_tmp
+    ports_in_txt = read_ports_db()
 
-    return read_ports()
+    # Scans new port and connects
+    for port_socket in ports_in_txt:
+        if port_socket != replica.get_port():
+            if port_socket not in error_in_port:
+                replica.addNodeToCluster(f'{SERVER_DB_ADDRESS}:{port_socket}')
+                sleep(2)
+                print(f'Connected with {SERVER_DB_ADDRESS}:{port_socket}')
+                ports_in_txt = ports_in_txt
+
+    sleep(5)
 
 
 def controller(replica: Database, conn: socket, addr: tuple) -> None:
     print()
     print(f'Connected with the socket: {addr}')
 
-    ports_in_txt = []
-
     while True:
         try:
             data = conn.recv(4120)
         except ConnectionResetError:
+            print(f'Connection terminated with the {addr}')
+            conn.close()
+            break
+        except ConnectionAbortedError:
             print(f'Connection terminated with the {addr}')
             conn.close()
             break
@@ -92,8 +118,6 @@ def controller(replica: Database, conn: socket, addr: tuple) -> None:
         function_name = ''
         resp = None
         response_msg = None
-
-        ports_in_txt = manages_ports(ports_in_txt, replica)
 
         if msg:
             response_msg = json.loads(msg)
@@ -190,17 +214,17 @@ def run(bd: str, port: int = None) -> None:
         case 'bd1':
             port = port + 1
             socket_port = SERVER_DB_SOCKET_PORT
-            write_port(port)
+            write_port(port, socket_port)
             pass
         case 'bd2':
             port = port + 2
             socket_port = SERVER_DB_SOCKET_PORT + 1
-            write_port(port)
+            write_port(port, socket_port)
             pass
         case 'bd3':
             port = port + 3
             socket_port = SERVER_DB_SOCKET_PORT + 2
-            write_port(port)
+            write_port(port, socket_port)
             pass
         case _:
             print(f'Invalid argument: {bd}')
@@ -209,7 +233,8 @@ def run(bd: str, port: int = None) -> None:
     bd_node = f'{SERVER_DB_ADDRESS}:{port}'
     replica = Database(bd_node, bd)
 
-    manages_ports([], replica)
+    sleep(5)
+    threading.Thread(target=manages_ports, args=(replica,)).start()
 
     skt = socket.socket()
 

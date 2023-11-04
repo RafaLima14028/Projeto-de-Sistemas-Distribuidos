@@ -23,10 +23,11 @@
 socket da replica 1. Isso está no handlesJSON.
 - [x] Remover a exceção gerada pelo handlesJSON, quando uma conexão é fechada inesperadamente no recv.
 - [x] Métodos do handlesJSON tentam refazer a conexão caso a réplica em uso falhe.
-- [ ] Mudar a forma como o tempo é guardado, dividindo por 10.000 para guardar e multiplica por 10.000
+- [x] Mudar a forma como o tempo é guardado, dividindo por 10.000 para guardar e multiplica por 10.000
 para retornar ao cliente.
 - [x] Tratar fechamento inesperado com o recv do cache.
-- [ ] Ajustar a reconexão do servidor com as réplicas.
+- [ ] Verificar a replicação entre os bancos de dados.
+- [x] Ajustar a reconexão do servidor com as réplicas.
 - [ ] Implementar os novos testes.
 - [ ] Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes.
   - [ ] controllerDatabase.py aceita porta como argumento `--port [porta]`, porta default ainda é 39400.
