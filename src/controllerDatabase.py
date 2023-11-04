@@ -3,9 +3,11 @@ import socket
 import threading
 import json
 import os
+from time import sleep
 
 from src.lmdbDB import Database
-from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT, DATABASE_PORTS_FILE
+from src.utils import (ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS,
+                       SERVER_DB_SOCKET_PORT, DATABASE_PORTS_FILE)
 
 
 def write_port(port: int) -> None:
@@ -64,6 +66,7 @@ def manages_ports(ports_in_txt: [int], replica: Database) -> [int]:
         if port_tmp != replica.get_port():
             if port_tmp not in ports_in_txt and port_tmp not in error_in_port:
                 replica.addNodeToCluster(f'{SERVER_DB_ADDRESS}:{port_tmp}')
+                sleep(2)
                 print(f'Connected with {SERVER_DB_ADDRESS}:{port_tmp}')
                 ports_in_txt = ports_in_txt_tmp
 
@@ -176,9 +179,12 @@ def controller(replica: Database, conn: socket, addr: tuple) -> None:
 
 def run(bd: str, port: int = None) -> None:
     if port is None:
-        port = 39400
+        port = 44000
     else:
-        port = int(port)
+        if port in [SERVER_DB_SOCKET_PORT, SERVER_DB_SOCKET_PORT + 1, SERVER_DB_SOCKET_PORT + 2]:
+            port = 44000
+        else:
+            port = int(port)
 
     match bd:
         case 'bd1':

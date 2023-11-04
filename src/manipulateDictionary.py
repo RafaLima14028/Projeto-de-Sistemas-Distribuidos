@@ -90,7 +90,7 @@ class ManipulateDictionary:
                             lastUpdateData = v1
                     break
         else:
-            for k, v in self.returnDictionary().items():
+            for k, v in self.__dictionary.items():
                 if k == key:
                     for v0, v1 in v:
                         if v0[0] <= version:
@@ -160,9 +160,6 @@ class ManipulateDictionary:
         self.__handlesJson.Trim(key)
 
         return last_key, last_value, last_version
-
-    def returnDictionary(self):
-        return self.__dictionary
 
     def delete(self, key: str) -> (str, str, int):
         key_cache_returned, value_cache_returned, verion_cache_returned = (

@@ -13,6 +13,8 @@ class HandlesJsonCache:
 
         self.__make_new_connection()
 
+        print(f'The cache is connected with the replica: {SERVER_DB_ADDRESS}:{self.__socket_port}')
+
     def __make_new_connection(self) -> int:
         """"
         Return Messages:
@@ -66,7 +68,24 @@ class HandlesJsonCache:
         )
 
         self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
+
+        resp = None
+
+        try:
+            resp = self.sk.recv(16480)
+        except ConnectionResetError:
+            resp_new_connection = self.__make_new_connection()
+
+            if resp_new_connection < 0:
+                self.sk.close()
+
+                raise Exception(
+                    f'Error in handlesJSON in Get: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            resp = self.sk.recv(16880)
+
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)
@@ -102,7 +121,24 @@ class HandlesJsonCache:
         )
 
         self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
+
+        resp = None
+
+        try:
+            resp = self.sk.recv(16480)
+        except ConnectionResetError:
+            resp_new_connection = self.__make_new_connection()
+
+            if resp_new_connection < 0:
+                self.sk.close()
+
+                raise Exception(
+                    f'Error in handlesJSON in GetRange: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            resp = self.sk.recv(16880)
+
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)
@@ -133,7 +169,24 @@ class HandlesJsonCache:
         )
 
         self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
+
+        resp = None
+
+        try:
+            resp = self.sk.recv(16480)
+        except ConnectionResetError:
+            resp_new_connection = self.__make_new_connection()
+
+            if resp_new_connection < 0:
+                self.sk.close()
+
+                raise Exception(
+                    f'Error in handlesJSON in GetAll: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            resp = self.sk.recv(16880)
+
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)
@@ -168,7 +221,24 @@ class HandlesJsonCache:
         )
 
         self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
+
+        resp = None
+
+        try:
+            resp = self.sk.recv(16480)
+        except ConnectionResetError:
+            resp_new_connection = self.__make_new_connection()
+
+            if resp_new_connection < 0:
+                self.sk.close()
+
+                raise Exception(
+                    f'Error in handlesJSON in Put: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            resp = self.sk.recv(16880)
+
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)
@@ -204,7 +274,24 @@ class HandlesJsonCache:
         )
 
         self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
+
+        resp = None
+
+        try:
+            resp = self.sk.recv(16480)
+        except ConnectionResetError:
+            resp_new_connection = self.__make_new_connection()
+
+            if resp_new_connection < 0:
+                self.sk.close()
+
+                raise Exception(
+                    f'Error in handlesJSON in PutAll: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            resp = self.sk.recv(16880)
+
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)
@@ -240,7 +327,24 @@ class HandlesJsonCache:
         )
 
         self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
+
+        resp = None
+
+        try:
+            resp = self.sk.recv(16480)
+        except ConnectionResetError:
+            resp_new_connection = self.__make_new_connection()
+
+            if resp_new_connection < 0:
+                self.sk.close()
+
+                raise Exception(
+                    f'Error in handlesJSON in Del: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            resp = self.sk.recv(16880)
+
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)
@@ -274,7 +378,24 @@ class HandlesJsonCache:
         )
 
         self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
+
+        resp = None
+
+        try:
+            resp = self.sk.recv(16480)
+        except ConnectionResetError:
+            resp_new_connection = self.__make_new_connection()
+
+            if resp_new_connection < 0:
+                self.sk.close()
+
+                raise Exception(
+                    f'Error in handlesJSON in DelRange: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            resp = self.sk.recv(16880)
+
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)
@@ -305,7 +426,24 @@ class HandlesJsonCache:
         )
 
         self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
+
+        resp = None
+
+        try:
+            resp = self.sk.recv(16480)
+        except ConnectionResetError:
+            resp_new_connection = self.__make_new_connection()
+
+            if resp_new_connection < 0:
+                self.sk.close()
+
+                raise Exception(
+                    f'Error in handlesJSON in DelAll: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            resp = self.sk.recv(16880)
+
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)
@@ -340,7 +478,24 @@ class HandlesJsonCache:
         )
 
         self.sk.send(msg.encode(ENCODING_AND_DECODING_TYPE))
-        resp = self.sk.recv(16480)
+
+        resp = None
+
+        try:
+            resp = self.sk.recv(16480)
+        except ConnectionResetError:
+            resp_new_connection = self.__make_new_connection()
+
+            if resp_new_connection < 0:
+                self.sk.close()
+
+                raise Exception(
+                    f'Error in handlesJSON in Trim: The connection was '
+                    f'interrupted at an unexpected time, the reconnection was attempted but failed.'
+                )
+
+            resp = self.sk.recv(16880)
+
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
         data = json.loads(resp)

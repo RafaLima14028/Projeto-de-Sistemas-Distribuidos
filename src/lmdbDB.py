@@ -6,6 +6,8 @@ from time import time, sleep
 
 from src.utils import ENCODING_AND_DECODING_TYPE
 
+TIME_FACTOR = 10000
+
 
 class Database(SyncObj):
     def __init__(self, selfNode, path):
@@ -35,6 +37,14 @@ class Database(SyncObj):
         print(f'The node {selfNode} has been successfully initialized...')
         print()
 
+    # @staticmethod
+    # def __reduced_time(time_int_value: int) -> float:
+    #     return float(time_int_value / TIME_FACTOR)
+    #
+    # @staticmethod
+    # def __increased_time(time_float_value: float) -> int:
+    #     return int(time_float_value / TIME_FACTOR)
+
     def get_port(self) -> int:
         return int(self.__self_node.split(':')[1])
 
@@ -47,6 +57,8 @@ class Database(SyncObj):
 
         new_version = int(time())
         new_version_bytes = struct.pack('>Q', new_version)
+        # new_version = float(int(time()) / TIME_FACTOR)
+        # new_version_bytes = struct.pack('d', new_version)
 
         with self.__env.begin(write=True) as txn:
             try:
@@ -82,6 +94,8 @@ class Database(SyncObj):
 
                     for version_bytes, value_bytes in existing_values:
                         version = struct.unpack('>Q', version_bytes)[0]
+                        # version = struct.unpack('d', version_bytes)[0]
+                        # version = int(version * 10000)
                         values.append((value_bytes.decode(ENCODING_AND_DECODING_TYPE), version))
             except lmdb.Error as e:
                 raise Exception(f'Failed to fetch data from the database: {str(e)}')
