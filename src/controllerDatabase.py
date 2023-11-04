@@ -58,43 +58,37 @@ def remove_port(port_db: int, port_socket: int) -> None:
 
 
 def manages_ports(replica: Database) -> None:
-    error_in_port = []
+    while True:
+        error_in_port = []
 
-    # Check if any ports have been dropped
-    ports_range_socket = read_ports_socket()
-    ports_range_dbs = read_ports_db()
+        # Check if any ports have been dropped
+        ports_range_socket = read_ports_socket()
+        ports_range_dbs = read_ports_db()
 
-    for port_socket, port_db in zip(ports_range_socket, ports_range_dbs):
-        if port_db != replica.get_port():
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)
+        for port_socket, port_db in zip(ports_range_socket, ports_range_dbs):
+            if port_db != replica.get_port():
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
 
-            try:
-                sock.connect((SERVER_DB_ADDRESS, port_socket))
-            except socket.error:
                 try:
-                    replica.removeNodeFromCluster(f'{SERVER_DB_ADDRESS}:{port_db}')
-                except Exception:
-                    pass
+                    sock.connect((SERVER_DB_ADDRESS, port_socket))
+                except socket.error:
+                    if replica.del_node(f'{SERVER_DB_ADDRESS}:{port_db}') == 1:
+                        remove_port(port_db, port_socket)
+                        error_in_port.append(port_db)
+                finally:
+                    sock.close()
 
-                remove_port(port_db, port_socket)
-                error_in_port.append(port_db)
-                print(f'The node {SERVER_DB_ADDRESS}:{port_socket} connection dropped')
-            finally:
-                sock.close()
+        ports_in_txt = read_ports_db()
 
-    ports_in_txt = read_ports_db()
+        # Scans new port and connects
+        for port_db in ports_in_txt:
+            if port_db != replica.get_port():
+                if port_db not in error_in_port:
+                    replica.add_new_node(f'{SERVER_DB_ADDRESS}:{port_db}')
+                    ports_in_txt = ports_in_txt
 
-    # Scans new port and connects
-    for port_socket in ports_in_txt:
-        if port_socket != replica.get_port():
-            if port_socket not in error_in_port:
-                replica.addNodeToCluster(f'{SERVER_DB_ADDRESS}:{port_socket}')
-                sleep(2)
-                print(f'Connected with {SERVER_DB_ADDRESS}:{port_socket}')
-                ports_in_txt = ports_in_txt
-
-    sleep(5)
+        sleep(5)
 
 
 def controller(replica: Database, conn: socket, addr: tuple) -> None:

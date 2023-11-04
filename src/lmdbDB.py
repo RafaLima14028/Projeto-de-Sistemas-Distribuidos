@@ -1,5 +1,5 @@
 import lmdb
-from pysyncobj import SyncObj, SyncObjConf, replicated_sync
+from pysyncobj import SyncObj, SyncObjConf, replicated_sync, node
 import struct
 import pickle
 from time import time, sleep
@@ -14,10 +14,13 @@ class Database(SyncObj):
         super(Database, self).__init__(
             selfNode,
             [],
-            SyncObjConf(dynamicMembershipChange=True)
+            SyncObjConf(
+                dynamicMembershipChange=True
+            )
         )
 
         self.__self_node = selfNode
+        self.__nodes_of_some_cluster = []
         self.__path_database = f'data_db/{path}/'
 
         self.__env = lmdb.open(
@@ -31,7 +34,8 @@ class Database(SyncObj):
             max_dbs=3
         )
 
-        sleep(2)
+        sleep(5)
+
         print(f'The nodes are synchronized: {self.isReady()}')
         print(f'The node {selfNode} has been successfully initialized...')
         print()
@@ -39,9 +43,55 @@ class Database(SyncObj):
     def get_port(self) -> int:
         return int(self.__self_node.split(':')[1])
 
-    @replicated_sync
+    def del_node(self, host_port: str) -> int:
+        """
+        Returns:
+             1 - Success
+             2 - Already unconnected
+            -1 - Error
+        """
+
+        if host_port in self.__nodes_of_some_cluster and host_port != self.__self_node:
+            try:
+                self.removeNodeFromCluster(host_port)
+                self.__nodes_of_some_cluster.remove(host_port)
+                sleep(2)
+
+                print(f'Unconnected with {host_port}')
+
+                return 1
+            except Exception:
+                return -1
+        else:
+            return 2
+
+    def add_new_node(self, host_port: str) -> int:
+        """
+        Returns:
+             1 - Success
+             2 - Already connected
+            -1 - Error
+        """
+
+        if host_port not in self.__nodes_of_some_cluster and host_port != self.__self_node:
+            try:
+                self.addNodeToCluster(host_port)
+                self.__nodes_of_some_cluster.append(host_port)
+                sleep(2)
+
+                print(f'Connected with {host_port}')
+
+                return 1
+            except Exception:
+                return -1
+        else:
+            return 2
+
+    @replicated_sync(timeout=2)
     def put(self, key: str, value: str) -> (str, str, int, int):
-        _, old_value_bytes, old_version = self.get(key)
+        _, old_value, old_version = self.get(key)
+
+        print(key, old_value, old_version)
 
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
         value_bytes = value.encode(ENCODING_AND_DECODING_TYPE)
@@ -52,20 +102,24 @@ class Database(SyncObj):
         try:
             with self.__env.begin(write=True) as txn:
                 with txn.cursor() as cursor:
-                    cursor.get(key_bytes, default=None)
-                    existing_values = cursor.value()
-
-                    if existing_values:
-                        existing_values = pickle.loads(existing_values)
+                    if cursor.get(key_bytes, default=None):
+                        existing_values = pickle.loads(cursor.value())
                     else:
                         existing_values = []
+                    # cursor.get(key_bytes, default=None)
+                    # existing_values = cursor.value()
+                    #
+                    # if existing_values:
+                    #     existing_values = pickle.loads(existing_values)
+                    # else:
+                    #     existing_values = []
 
                     existing_values.append((new_version_bytes, value_bytes))
                     txn.put(key_bytes, pickle.dumps(existing_values))
         except lmdb.Error as e:
             raise Exception(f'A database insertion failure occurred: {str(e)}')
 
-        return key, old_value_bytes, old_version, new_version
+        return key, old_value, old_version, new_version
 
     def get_all_values_key(self, key: str) -> [(str, int)]:
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
