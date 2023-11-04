@@ -62,8 +62,6 @@ class Database(SyncObj):
 
                     existing_values.append((new_version_bytes, value_bytes))
                     txn.put(key_bytes, pickle.dumps(existing_values))
-
-                txn.commit()
         except lmdb.Error as e:
             raise Exception(f'A database insertion failure occurred: {str(e)}')
 
@@ -167,7 +165,6 @@ class Database(SyncObj):
         try:
             with self.__env.begin(write=True) as txn:
                 txn.delete(key_bytes)
-                txn.commit()
         except lmdb.Error as e:
             raise Exception(f'Database delete failed: {str(e)}')
 
@@ -196,8 +193,6 @@ class Database(SyncObj):
                             values_in_range[key_str] = [(last_version, last_value)]
 
                         cursor.delete()
-
-                txn.commit()
         except lmdb.Error as e:
             raise Exception(f'Database delete in range failed: {str(e)}')
 
@@ -212,7 +207,6 @@ class Database(SyncObj):
         try:
             with self.__env.begin(write=True) as txn:
                 txn.delete(key_bytes)
-                txn.commit()
         except lmdb.Error as e:
             raise Exception(f'Database delete failed: {str(e)}')
 
@@ -236,8 +230,6 @@ class Database(SyncObj):
 
                     existing_values.append((new_version_bytes, value_bytes))
                     txn.put(key_bytes, pickle.dumps(existing_values))
-
-                    txn.commit()
             except lmdb.Error as e:
                 raise Exception(f'A database trim failure occurred: {str(e)}')
 
@@ -263,8 +255,6 @@ class Database(SyncObj):
 
                     existing_values.append((new_version_bytes, value_bytes))
                     txn.put(key_bytes, pickle.dumps(existing_values))
-
-                    txn.commit()
             except lmdb.Error as e:
                 raise Exception(f'A database trim failure occurred: {str(e)}')
 
