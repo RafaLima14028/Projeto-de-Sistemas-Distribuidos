@@ -1,5 +1,5 @@
 import lmdb
-from pysyncobj import SyncObj, SyncObjConf, replicated_sync, node
+from pysyncobj import SyncObj, SyncObjConf, replicated_sync
 import struct
 import pickle
 from time import time, sleep
@@ -21,6 +21,7 @@ class Database(SyncObj):
 
         self.__self_node = selfNode
         self.__nodes_of_some_cluster = []
+        self.__other_nodes = set()
         self.__path_database = f'data_db/{path}/'
 
         self.__env = lmdb.open(
@@ -40,6 +41,16 @@ class Database(SyncObj):
         print(f'The node {selfNode} has been successfully initialized...')
         print()
 
+    def connected_with(self):
+        # if len(list(self.otherNodes)) == 0:
+        #     print('Lista vazia')
+
+        print('Connected with:')
+        print(self.__nodes_of_some_cluster)
+        print()
+        for node in self.otherNodes:
+            print(node)
+
     def get_port(self) -> int:
         return int(self.__self_node.split(':')[1])
 
@@ -53,9 +64,11 @@ class Database(SyncObj):
 
         if host_port in self.__nodes_of_some_cluster and host_port != self.__self_node:
             try:
+                print('Removendo')
                 self.removeNodeFromCluster(host_port)
+                sleep(10)
                 self.__nodes_of_some_cluster.remove(host_port)
-                sleep(2)
+                self.__other_nodes = self.otherNodes
 
                 print(f'Unconnected with {host_port}')
 
@@ -75,9 +88,12 @@ class Database(SyncObj):
 
         if host_port not in self.__nodes_of_some_cluster and host_port != self.__self_node:
             try:
+                print('Inserindo')
                 self.addNodeToCluster(host_port)
+                sleep(10)
+
                 self.__nodes_of_some_cluster.append(host_port)
-                sleep(2)
+                self.__other_nodes = self.otherNodes
 
                 print(f'Connected with {host_port}')
 
@@ -118,6 +134,8 @@ class Database(SyncObj):
                     txn.put(key_bytes, pickle.dumps(existing_values))
         except lmdb.Error as e:
             raise Exception(f'A database insertion failure occurred: {str(e)}')
+
+        self.waitReady()
 
         return key, old_value, old_version, new_version
 
