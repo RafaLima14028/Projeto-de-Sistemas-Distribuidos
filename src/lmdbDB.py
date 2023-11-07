@@ -38,7 +38,6 @@ class Database(SyncObj):
 
         print(f'The nodes are synchronized: {self.isReady()}')
         print(f'The node {selfNode} has been successfully initialized...')
-        print()
 
     def get_port(self) -> int:
         return int(self.__self_node.split(':')[1])

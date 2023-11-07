@@ -2,12 +2,11 @@ import argparse
 import socket
 import threading
 import json
-import os
 from time import sleep
 
 from src.lmdbDB import Database
 from src.utils import (ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS,
-                       SERVER_DB_SOCKET_PORT, DATABASE_PORTS_FILE)
+                       SERVER_DB_SOCKET_PORT)
 
 
 def controller(replica: Database, conn: socket, addr: tuple) -> None:
@@ -138,9 +137,10 @@ def init_bd(bd: str):
     skt = socket.socket()
     skt.bind((SERVER_DB_ADDRESS, socket_port))
     skt.listen(30)
-    print()
     print(f'Database socket initialized at: {(SERVER_DB_ADDRESS, socket_port)}')
+    sleep(2)
     print('Ready...')
+    print()
 
     return replica, skt
 
@@ -182,21 +182,21 @@ def run(db1: bool = False, db2: bool = False, db3: bool = False) -> None:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-db1', action='store_true', help='Opção -db1')
-    parser.add_argument('-db2', action='store_true', help='Opção -db2')
-    parser.add_argument('-db3', action='store_true', help='Opção -db3')
+    parser.add_argument('-bd1', action='store_true', help='Opção -bd1')
+    parser.add_argument('-bd2', action='store_true', help='Opção -bd2')
+    parser.add_argument('-bd3', action='store_true', help='Opção -bd3')
 
     args = parser.parse_args()
 
-    _db1 = False
-    _db2 = False
-    _db3 = False
+    _bd1 = False
+    _bd2 = False
+    _bd3 = False
 
-    if args.db1:
-        _db1 = True
-    if args.db2:
-        _db2 = True
-    if args.db3:
-        _db3 = True
+    if args.bd1:
+        _bd1 = True
+    if args.bd2:
+        _bd2 = True
+    if args.bd3:
+        _bd3 = True
 
-    run(_db1, _db2, _db3)
+    run(_bd1, _bd2, _bd3)
