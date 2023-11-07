@@ -26,12 +26,13 @@ socket da replica 1. Isso está no handlesJSON.
 - [x] Mudar a forma como o tempo é guardado, dividindo por 10.000 para guardar e multiplica por 10.000
 para retornar ao cliente.
 - [x] Tratar fechamento inesperado com o recv do cache.
-- [ ] Verificar a replicação entre os bancos de dados.
+- [x] Verificar a replicação entre os bancos de dados.
 - [x] Ajustar a reconexão do servidor com as réplicas.
-- [ ] Implementar os novos testes.
-- [ ] Modificar controllerDatabase.py e o lmdbDB.py para aceitar portas diferentes.
-  - [ ] controllerDatabase.py aceita porta como argumento `--port [porta]`, porta default ainda é 39400.
 - [x] No servidor há algumas funções sem cache.
+- [ ] Ajustar funções do cache:
+  - [ ] DelRange e DelAll (está ficando travada).
+- [x] replica.sh receber quais dbs devem ser levantados.
+- [ ] Implementar os novos testes.
 - [ ] Atualizar README.md com as instruções de compilação, inicialização e uso do controllerDatabase, servidor e cliente.
 - [ ] Definir argumentos para replica.sh / controllerDatabase.py.
 

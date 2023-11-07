@@ -10,92 +10,6 @@ from src.utils import (ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS,
                        SERVER_DB_SOCKET_PORT, DATABASE_PORTS_FILE)
 
 
-def write_port(port_db: int, port_socket: int) -> None:
-    if port_db not in read_ports_db() and port_socket not in read_ports_socket():
-        with open(DATABASE_PORTS_FILE, 'a') as file:
-            file.write(str(port_db) + '-' + str(port_socket) + '\n')
-
-
-def read_ports_db() -> list:
-    ports = []
-
-    if os.path.exists(DATABASE_PORTS_FILE):
-        with open(DATABASE_PORTS_FILE, 'r') as file:
-            for line in file:
-                port = int(line.split('-')[0])
-                ports.append(port)
-
-    return ports
-
-
-def read_ports_socket() -> list:
-    ports = []
-
-    if os.path.exists(DATABASE_PORTS_FILE):
-        with open(DATABASE_PORTS_FILE, 'r') as file:
-            for line in file:
-                port = int(line.split('-')[1].split('\n')[0])
-                ports.append(port)
-
-    return ports
-
-
-def remove_port(port_db: int, port_socket: int) -> None:
-    if os.path.exists(DATABASE_PORTS_FILE):
-        lines = None
-
-        with open(DATABASE_PORTS_FILE, 'r') as file:
-            lines = file.readlines()
-
-        with open(DATABASE_PORTS_FILE, 'w') as file:
-            for line in lines:
-                line_split = line.split('-')
-                port_line_db = int(line_split[0])
-                port_line_socket = int(line_split[1].split('\n')[0])
-
-                if port_line_socket != port_socket and port_line_db != port_db:
-                    file.write(line)
-
-
-def manages_ports(replica: Database) -> None:
-    while True:
-        # Check if any ports have been dropped
-        ports_range_socket = read_ports_socket()
-        ports_range_dbs = read_ports_db()
-
-        for port_socket, port_db in zip(ports_range_socket, ports_range_dbs):
-            if port_db != replica.get_port():
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5)
-
-                try:
-                    sock.connect((SERVER_DB_ADDRESS, port_socket))
-                except socket.error:
-                    if replica.del_node(f'{SERVER_DB_ADDRESS}:{port_db}') == 1:
-                        remove_port(port_db, port_socket)
-                finally:
-                    sock.close()
-
-        # Scans new port and connects
-        for port_db in read_ports_db():
-            if port_db != replica.get_port():
-                res = replica.add_new_node(f'{SERVER_DB_ADDRESS}:{port_db}')
-                print(f'Tentou inserir: {res}')
-
-        print()
-        replica.connected_with()
-        print()
-
-        print()
-        print(replica.get_all_values_key('Rafael'))
-        print(replica.get_all_values_key('Gabriel'))
-        print(replica.get_all_values_key('Mateus'))
-        print(replica.get_all_values_key('Amanda'))
-        print()
-
-        sleep(5)
-
-
 def controller(replica: Database, conn: socket, addr: tuple) -> None:
     print()
     print(f'Connected with the socket: {addr}')
@@ -200,22 +114,24 @@ def controller(replica: Database, conn: socket, addr: tuple) -> None:
         conn.send(resp.encode(ENCODING_AND_DECODING_TYPE))
 
 
-def run(bd: str, port: int = None) -> None:
-    if port is None:
-        port = 44000
-    else:
-        if port in [SERVER_DB_SOCKET_PORT, SERVER_DB_SOCKET_PORT + 1, SERVER_DB_SOCKET_PORT + 2]:
-            port = 44000
-        else:
-            port = int(port)
+def run(db1: bool = False, db2: bool = False, db3: bool = False) -> None:
+    if not db1 and not db2 and not db3:
+        print(f'Error: No Database Passed')
+        return
 
-    replica = None
+    port = 44000
+    replica_db1 = None
+    replica_db2 = None
+    replica_db3 = None
+
+    bd = None
+
+    # TODO: ARRUMAR DAQUI PARA BAIXO, PARA ACEITAR VÁRIOS DBS NO MESMO ARQUIVO
 
     match bd:
         case 'bd1':
             port = port + 1
             socket_port = SERVER_DB_SOCKET_PORT
-            write_port(port, socket_port)
 
             bd_node = f'{SERVER_DB_ADDRESS}:{port}'
             otherNodes = [f'{SERVER_DB_ADDRESS}:{port + 1}', f'{SERVER_DB_ADDRESS}:{port + 2}']
@@ -225,7 +141,6 @@ def run(bd: str, port: int = None) -> None:
         case 'bd2':
             port = port + 2
             socket_port = SERVER_DB_SOCKET_PORT + 1
-            write_port(port, socket_port)
 
             bd_node = f'{SERVER_DB_ADDRESS}:{port}'
             otherNodes = [f'{SERVER_DB_ADDRESS}:{port - 1}', f'{SERVER_DB_ADDRESS}:{port + 1}']
@@ -235,7 +150,6 @@ def run(bd: str, port: int = None) -> None:
         case 'bd3':
             port = port + 3
             socket_port = SERVER_DB_SOCKET_PORT + 2
-            write_port(port, socket_port)
 
             bd_node = f'{SERVER_DB_ADDRESS}:{port}'
             otherNodes = [f'{SERVER_DB_ADDRESS}:{port - 2}', f'{SERVER_DB_ADDRESS}:{port - 1}']
@@ -247,13 +161,13 @@ def run(bd: str, port: int = None) -> None:
             exit(1)
 
     sleep(5)
-    # threading.Thread(target=manages_ports, args=(replica,)).start()
 
     skt = socket.socket()
 
     skt.bind((SERVER_DB_ADDRESS, socket_port))
     print()
     print(f'Database socket initialized at: {(SERVER_DB_ADDRESS, socket_port)}')
+    print('Ready...')
     skt.listen(30)
 
     while True:
@@ -263,9 +177,22 @@ def run(bd: str, port: int = None) -> None:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('bd')
-    parser.add_argument('--port')
+
+    parser.add_argument('-db1', action='store_true', help='Opção -db1')
+    parser.add_argument('-db2', action='store_true', help='Opção -db2')
+    parser.add_argument('-db3', action='store_true', help='Opção -db3')
 
     args = parser.parse_args()
 
-    run(args.bd, args.port)
+    db1 = False
+    db2 = False
+    db3 = False
+
+    if args.db1:
+        db1 = True
+    if args.db2:
+        db2 = True
+    if args.db3:
+        db3 = True
+
+    run(db1, db2, db3)

@@ -101,7 +101,7 @@ class HandlesJsonCache:
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.__sk.recv(16880)
+            resp = self.__sk.recv(16480)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -161,7 +161,7 @@ class HandlesJsonCache:
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.__sk.recv(16880)
+            resp = self.__sk.recv(16480)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -216,7 +216,7 @@ class HandlesJsonCache:
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.__sk.recv(16880)
+            resp = self.__sk.recv(16480)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -275,7 +275,7 @@ class HandlesJsonCache:
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.__sk.recv(16880)
+            resp = self.__sk.recv(16480)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -335,7 +335,7 @@ class HandlesJsonCache:
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.__sk.recv(16880)
+            resp = self.__sk.recv(16480)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -395,7 +395,7 @@ class HandlesJsonCache:
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.__sk.recv(16880)
+            resp = self.__sk.recv(16480)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -453,7 +453,7 @@ class HandlesJsonCache:
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.__sk.recv(16880)
+            resp = self.__sk.recv(16480)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -508,7 +508,7 @@ class HandlesJsonCache:
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.__sk.recv(16880)
+            resp = self.__sk.recv(16480)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 
@@ -567,7 +567,7 @@ class HandlesJsonCache:
                     f'interrupted at an unexpected time, the reconnection was attempted but failed.'
                 )
 
-            resp = self.__sk.recv(16880)
+            resp = self.__sk.recv(16480)
 
         resp = resp.decode(ENCODING_AND_DECODING_TYPE)
 

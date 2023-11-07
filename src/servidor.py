@@ -213,7 +213,7 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
-        dict_range = self.__cache.delRange(from_key, to_key)
+        data = self.__cache.delRange(from_key, to_key)
 
         try:
             for key, values in data.items():

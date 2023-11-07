@@ -127,7 +127,7 @@ class ManipulateDictionary:
                         for version, value in values:
                             if version <= max_requested_version:
                                 if key in values_in_range:
-                                    values_in_range[key].append((version, value))
+                                    values_in_range[key].append(((version, value), int(time())))
                                 else:
                                     values_in_range[key] = [(version, value)]
         else:
@@ -136,9 +136,9 @@ class ManipulateDictionary:
                     _, value_returned, version_returned = self.getByKeyVersion(k)
 
                     if k in values_in_range:
-                        values_in_range[k].append((version_returned, value_returned))
+                        values_in_range[k].append(((version_returned, value_returned), int(time())))
                     else:
-                        values_in_range[k] = [(version_returned, value_returned)]
+                        values_in_range[k] = [((version_returned, value_returned), int(time()))]
 
         if need_refresh:
             new_dict = self.__handlesJson.GetRange(start_key, end_key, start_version, end_version)
@@ -155,7 +155,7 @@ class ManipulateDictionary:
 
         if key in self.__dictionary:
             self.__dictionary[key].clear()
-            self.__dictionary[key].append((last_version, last_value))
+            self.__dictionary[key].append(((last_version, last_value), int(time())))
 
         self.__handlesJson.Trim(key)
 
@@ -174,9 +174,11 @@ class ManipulateDictionary:
         return key_cache_returned, value_cache_returned, verion_cache_returned
 
     def delRange(self, start_key: str, end_key: str) -> dict:
-        keys_in_range = self.getRangeByKeyVersion(start_key, end_key)
+        # keys_in_range = self.getRangeByKeyVersion(start_key, end_key)
 
-        for key in list(keys_in_range.keys()):
+        for key in list(self.__dictionary.keys()):
             del self.__dictionary[key]
 
-        return keys_in_range
+        data = self.__handlesJson.DelRange(start_key, end_key)
+
+        return data

@@ -20,8 +20,6 @@ class Database(SyncObj):
         )
 
         self.__self_node = selfNode
-        self.__nodes_of_some_cluster = []
-        self.__other_nodes = set()
         self.__path_database = f'data_db/{path}/'
 
         self.__env = lmdb.open(
@@ -35,75 +33,17 @@ class Database(SyncObj):
             max_dbs=3
         )
 
+        self.waitReady()
         sleep(5)
 
         print(f'The nodes are synchronized: {self.isReady()}')
         print(f'The node {selfNode} has been successfully initialized...')
         print()
 
-    def connected_with(self):
-        # if len(list(self.otherNodes)) == 0:
-        #     print('Lista vazia')
-
-        print('Connected with:')
-        print(self.__nodes_of_some_cluster)
-        print()
-        for node in self.otherNodes:
-            print(node)
-
     def get_port(self) -> int:
         return int(self.__self_node.split(':')[1])
 
-    def del_node(self, host_port: str) -> int:
-        """
-        Returns:
-             1 - Success
-             2 - Already unconnected
-            -1 - Error
-        """
-
-        if host_port in self.__nodes_of_some_cluster and host_port != self.__self_node:
-            try:
-                print('Removendo')
-                self.removeNodeFromCluster(host_port)
-                sleep(10)
-                self.__nodes_of_some_cluster.remove(host_port)
-                self.__other_nodes = self.otherNodes
-
-                print(f'Unconnected with {host_port}')
-
-                return 1
-            except Exception:
-                return -1
-        else:
-            return 2
-
-    def add_new_node(self, host_port: str) -> int:
-        """
-        Returns:
-             1 - Success
-             2 - Already connected
-            -1 - Error
-        """
-
-        if host_port not in self.__nodes_of_some_cluster and host_port != self.__self_node:
-            try:
-                print('Inserindo')
-                self.addNodeToCluster(host_port)
-                sleep(10)
-
-                self.__nodes_of_some_cluster.append(host_port)
-                self.__other_nodes = self.otherNodes
-
-                print(f'Connected with {host_port}')
-
-                return 1
-            except Exception:
-                return -1
-        else:
-            return 2
-
-    @replicated_sync(timeout=2)
+    @replicated_sync
     def put(self, key: str, value: str) -> (str, str, int, int):
         _, old_value, old_version = self.get(key)
 
@@ -122,13 +62,6 @@ class Database(SyncObj):
                         existing_values = pickle.loads(cursor.value())
                     else:
                         existing_values = []
-                    # cursor.get(key_bytes, default=None)
-                    # existing_values = cursor.value()
-                    #
-                    # if existing_values:
-                    #     existing_values = pickle.loads(existing_values)
-                    # else:
-                    #     existing_values = []
 
                     existing_values.append((new_version_bytes, value_bytes))
                     txn.put(key_bytes, pickle.dumps(existing_values))
@@ -228,7 +161,7 @@ class Database(SyncObj):
 
         return values_in_range
 
-    @replicated_sync
+    @replicated_sync(timeout=2)
     def delete(self, key: str) -> (str, str, int):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
 
@@ -245,15 +178,15 @@ class Database(SyncObj):
         else:
             return key, last_value, last_version
 
-    @replicated_sync
-    def delRange(self, start_key: str, end_key: str) -> dict:
+    @replicated_sync(timeout=2)
+    def delRange(self, start_key: str, end_key: str) -> dict[str, list[tuple[int, str]]]:
         values_in_range = dict()
 
         try:
             with self.__env.begin(write=True) as txn:
                 cursor = txn.cursor()
 
-                for key, value in cursor:
+                for key, value in cursor.iter():
                     key_str = key.decode(ENCODING_AND_DECODING_TYPE)
 
                     if start_key <= key_str <= end_key:
@@ -270,7 +203,7 @@ class Database(SyncObj):
 
         return values_in_range
 
-    @replicated_sync
+    @replicated_sync(timeout=2)
     def trim(self, key: str) -> (str, str, int):
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
 
