@@ -209,31 +209,45 @@ def run(bd: str, port: int = None) -> None:
         else:
             port = int(port)
 
+    replica = None
+
     match bd:
         case 'bd1':
             port = port + 1
             socket_port = SERVER_DB_SOCKET_PORT
             write_port(port, socket_port)
+
+            bd_node = f'{SERVER_DB_ADDRESS}:{port}'
+            otherNodes = [f'{SERVER_DB_ADDRESS}:{port + 1}', f'{SERVER_DB_ADDRESS}:{port + 2}']
+            replica = Database(bd_node, otherNodes, bd)
+
             pass
         case 'bd2':
             port = port + 2
             socket_port = SERVER_DB_SOCKET_PORT + 1
             write_port(port, socket_port)
+
+            bd_node = f'{SERVER_DB_ADDRESS}:{port}'
+            otherNodes = [f'{SERVER_DB_ADDRESS}:{port - 1}', f'{SERVER_DB_ADDRESS}:{port + 1}']
+            replica = Database(bd_node, otherNodes, bd)
+
             pass
         case 'bd3':
             port = port + 3
             socket_port = SERVER_DB_SOCKET_PORT + 2
             write_port(port, socket_port)
+
+            bd_node = f'{SERVER_DB_ADDRESS}:{port}'
+            otherNodes = [f'{SERVER_DB_ADDRESS}:{port - 2}', f'{SERVER_DB_ADDRESS}:{port - 1}']
+            replica = Database(bd_node, otherNodes, bd)
+
             pass
         case _:
             print(f'Invalid argument: {bd}')
             exit(1)
 
-    bd_node = f'{SERVER_DB_ADDRESS}:{port}'
-    replica = Database(bd_node, bd)
-
     sleep(5)
-    threading.Thread(target=manages_ports, args=(replica,)).start()
+    # threading.Thread(target=manages_ports, args=(replica,)).start()
 
     skt = socket.socket()
 

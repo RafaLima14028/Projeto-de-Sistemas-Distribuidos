@@ -10,10 +10,10 @@ TIME_FACTOR = 10000
 
 
 class Database(SyncObj):
-    def __init__(self, selfNode, path):
+    def __init__(self, selfNode, otherNodes, path):
         super(Database, self).__init__(
             selfNode,
-            [],
+            otherNodes,
             SyncObjConf(
                 dynamicMembershipChange=True
             )
