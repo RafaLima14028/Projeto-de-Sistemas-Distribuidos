@@ -29,6 +29,7 @@ para retornar ao cliente.
 - [x] Verificar a replicação entre os bancos de dados.
 - [x] Ajustar a reconexão do servidor com as réplicas.
 - [x] No servidor há algumas funções sem cache.
+- [ ] Problemas com Threads (processos) do SyncObj, conversando pela Thread (gera erro).
 - [ ] Ajustar funções do cache:
   - [ ] DelRange e DelAll (está ficando travada).
 - [x] replica.sh receber quais dbs devem ser levantados.
