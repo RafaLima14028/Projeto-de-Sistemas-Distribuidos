@@ -114,65 +114,69 @@ def controller(replica: Database, conn: socket, addr: tuple) -> None:
         conn.send(resp.encode(ENCODING_AND_DECODING_TYPE))
 
 
-def run(db1: bool = False, db2: bool = False, db3: bool = False) -> None:
-    if not db1 and not db2 and not db3:
-        print(f'Error: No Database Passed')
-        return
-
-    port = 44000
-    replica_db1 = None
-    replica_db2 = None
-    replica_db3 = None
-
-    bd = None
-
-    # TODO: ARRUMAR DAQUI PARA BAIXO, PARA ACEITAR VÁRIOS DBS NO MESMO ARQUIVO
-
+def init_bd(bd: str):
     match bd:
         case 'bd1':
-            port = port + 1
+            port = 44001
             socket_port = SERVER_DB_SOCKET_PORT
-
-            bd_node = f'{SERVER_DB_ADDRESS}:{port}'
-            otherNodes = [f'{SERVER_DB_ADDRESS}:{port + 1}', f'{SERVER_DB_ADDRESS}:{port + 2}']
-            replica = Database(bd_node, otherNodes, bd)
-
-            pass
+            other_nodes = [f'{SERVER_DB_ADDRESS}:{44002}', f'{SERVER_DB_ADDRESS}:{44003}']
         case 'bd2':
-            port = port + 2
+            port = 44002
             socket_port = SERVER_DB_SOCKET_PORT + 1
-
-            bd_node = f'{SERVER_DB_ADDRESS}:{port}'
-            otherNodes = [f'{SERVER_DB_ADDRESS}:{port - 1}', f'{SERVER_DB_ADDRESS}:{port + 1}']
-            replica = Database(bd_node, otherNodes, bd)
-
-            pass
+            other_nodes = [f'{SERVER_DB_ADDRESS}:{44001}', f'{SERVER_DB_ADDRESS}:{44003}']
         case 'bd3':
-            port = port + 3
+            port = 44003
             socket_port = SERVER_DB_SOCKET_PORT + 2
-
-            bd_node = f'{SERVER_DB_ADDRESS}:{port}'
-            otherNodes = [f'{SERVER_DB_ADDRESS}:{port - 2}', f'{SERVER_DB_ADDRESS}:{port - 1}']
-            replica = Database(bd_node, otherNodes, bd)
-
-            pass
+            other_nodes = [f'{SERVER_DB_ADDRESS}:{44001}', f'{SERVER_DB_ADDRESS}:{44002}']
         case _:
             print(f'Invalid argument: {bd}')
             exit(1)
 
-    sleep(5)
+    bd_node = f'{SERVER_DB_ADDRESS}:{port}'
+    replica = Database(bd_node, other_nodes, bd)
 
     skt = socket.socket()
-
     skt.bind((SERVER_DB_ADDRESS, socket_port))
+    skt.listen(30)
     print()
     print(f'Database socket initialized at: {(SERVER_DB_ADDRESS, socket_port)}')
     print('Ready...')
-    skt.listen(30)
+
+    return replica, skt
+
+
+def run(db1: bool = False, db2: bool = False, db3: bool = False) -> None:
+    if not db1 and not db2 and not db3:
+        print(f'Error: no Database specified')
+        return
+
+    replica_db1 = None
+    replica_db2 = None
+    replica_db3 = None
+
+    skt1 = None
+    skt2 = None
+    skt3 = None
+
+    # bd = None
+
+    if db1:
+        replica_db1, skt1 = init_bd('bd1')
+    if db2:
+        replica_db2, skt2 = init_bd('bd2')
+    if db3:
+        replica_db3, skt3 = init_bd('bd3')
 
     while True:
-        conn, addr = skt.accept()
-        threading.Thread(target=controller, args=(replica, conn, addr)).start()
+        if db1:
+            conn, addr = skt1.accept()
+            threading.Thread(target=controller, args=(replica_db1, conn, addr)).start()
+        if db2:
+            conn, addr = skt2.accept()
+            threading.Thread(target=controller, args=(replica_db2, conn, addr)).start()
+        if db3:
+            conn, addr = skt3.accept()
+            threading.Thread(target=controller, args=(replica_db3, conn, addr)).start()
 
 
 if __name__ == '__main__':
@@ -184,15 +188,15 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    db1 = False
-    db2 = False
-    db3 = False
+    _db1 = False
+    _db2 = False
+    _db3 = False
 
     if args.db1:
-        db1 = True
+        _db1 = True
     if args.db2:
-        db2 = True
+        _db2 = True
     if args.db3:
-        db3 = True
+        _db3 = True
 
-    run(db1, db2, db3)
+    run(_db1, _db2, _db3)

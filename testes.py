@@ -18,19 +18,13 @@ def print_conteudo():
     cliente.get_range(50053, 'teste1', 'teste99', 0, 0)
 
 
-bd1_thread = threading.Thread(target=controllerDatabase.run, args=('bd1',))
-bd2_thread = threading.Thread(target=controllerDatabase.run, args=('bd2',))
-bd3_thread = threading.Thread(target=controllerDatabase.run, args=('bd3',))
+bd_thread = threading.Thread(target=controllerDatabase.run, args=(True, True, True,))
 
 server1_thread = threading.Thread(target=servidor.serve, args=(50051,))
 server2_thread = threading.Thread(target=servidor.serve, args=(50052,))
 server3_thread = threading.Thread(target=servidor.serve, args=(50053,))
 
-bd1_thread.start()
-sleep(3)
-bd2_thread.start()
-sleep(3)
-bd3_thread.start()
+bd_thread.start()
 sleep(3)
 
 server1_thread.start()
