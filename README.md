@@ -32,13 +32,13 @@ para retornar ao cliente.
 - [x] Ajustar a reconexão do servidor com as réplicas.
 - [x] No servidor há algumas funções sem cache.
 - [ ] Problemas com Threads (processos) do SyncObj, conversando pela Thread (gera erro).
-- [ ] Quando ensera o servidor, o controller espera conectar com o próximo db, deve ficar
+- [x] Quando ensera o servidor, o controller espera conectar com o próximo db, deve ficar
 verificando qual vai ser o próximo a ser conectado (controllerDatabase.py linha 222 - no while True)
 - [x] Ajustar funções do cache:
   - [x] DelRange (está ficando travada).
   - [x] DelAll (está ficando travada).
 - [x] replica.sh receber quais dbs devem ser levantados.
-- [ ] Implementar os novos testes.
+- [x] Implementar os novos testes.
 - [x] Atualizar README.md com as instruções de compilação, inicialização e uso do controllerDatabase, servidor e cliente.
 - [x] Definir argumentos para replica.sh / controllerDatabase.py.
 
