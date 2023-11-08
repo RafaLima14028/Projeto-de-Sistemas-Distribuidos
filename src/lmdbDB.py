@@ -51,8 +51,6 @@ class Database(SyncObj):
     def put(self, key: str, value: str) -> (str, str, int, int):
         _, old_value, old_version = self.get(key)
 
-        print(key, old_value, old_version)
-
         key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
         value_bytes = value.encode(ENCODING_AND_DECODING_TYPE)
 
