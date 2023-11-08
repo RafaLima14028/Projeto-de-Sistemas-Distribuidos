@@ -30,6 +30,8 @@ para retornar ao cliente.
 - [x] Ajustar a reconexão do servidor com as réplicas.
 - [x] No servidor há algumas funções sem cache.
 - [ ] Problemas com Threads (processos) do SyncObj, conversando pela Thread (gera erro).
+- [ ] Quando ensera o servidor, o controller espera conectar com o próximo db, deve ficar
+verificando qual vai ser o próximo a ser conectado (controllerDatabase.py linha 222 - no while True)
 - [x] Ajustar funções do cache:
   - [x] DelRange (está ficando travada).
   - [x] DelAll (está ficando travada).
