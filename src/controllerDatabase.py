@@ -5,8 +5,7 @@ import json
 from time import sleep
 
 from src.lmdbDB import Database
-from src.utils import (ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS,
-                       SERVER_DB_SOCKET_PORT)
+from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT
 
 
 def controller(replica: Database, conn: socket, addr: tuple) -> None:

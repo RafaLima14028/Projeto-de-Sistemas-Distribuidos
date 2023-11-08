@@ -6,29 +6,31 @@ from time import time, sleep
 
 from src.utils import ENCODING_AND_DECODING_TYPE
 
-TIME_FACTOR = 10000
-
 
 class Database(SyncObj):
     def __init__(self, selfNode, otherNodes, path):
+        self.__conf_pysyncobj = SyncObjConf(
+            dynamicMembershipChange=True,
+            logCompactionMinTime=86400
+        )
+
         super(Database, self).__init__(
             selfNode,
             otherNodes,
-            SyncObjConf(
-                dynamicMembershipChange=True
-            )
+            self.__conf_pysyncobj
         )
 
         self.__self_node_host = selfNode.split(':')[0]
         self.__self_node_port = int(selfNode.split(':')[1])
         self.__other_nodes = otherNodes
         self.__path_database = f'data_db/{path}/'
+        self.__time_factor = 10000
 
         self.__env = lmdb.open(
             path=self.__path_database,
             sync=True,
             writemap=True,
-            # metasync=True,
+            metasync=True,
             map_async=True,
             readonly=False,
             max_readers=3,
@@ -55,7 +57,7 @@ class Database(SyncObj):
         value_bytes = value.encode(ENCODING_AND_DECODING_TYPE)
 
         new_version = int(time())
-        new_version_bytes = struct.pack('d', float(new_version / TIME_FACTOR))
+        new_version_bytes = struct.pack('d', float(new_version / self.__time_factor))
 
         try:
             with self.__env.begin(write=True) as txn:
@@ -89,7 +91,9 @@ class Database(SyncObj):
 
                     for version_bytes, value_bytes in existing_values:
                         version = struct.unpack('d', version_bytes)[0]
-                        values.append((value_bytes.decode(ENCODING_AND_DECODING_TYPE), int(version * TIME_FACTOR)))
+                        values.append(
+                            (value_bytes.decode(ENCODING_AND_DECODING_TYPE), int(version * self.__time_factor))
+                        )
         except lmdb.Error as e:
             raise Exception(f'Failed to fetch data from the database: {str(e)}')
 
@@ -208,7 +212,7 @@ class Database(SyncObj):
             key_bytes = key.encode(ENCODING_AND_DECODING_TYPE)
             value_bytes = last_value.encode(ENCODING_AND_DECODING_TYPE)
 
-            new_version = float(last_version / TIME_FACTOR)
+            new_version = float(last_version / self.__time_factor)
             new_version_bytes = struct.pack('d', new_version)
 
             try:
@@ -233,7 +237,7 @@ class Database(SyncObj):
             value_bytes = last_value.encode(ENCODING_AND_DECODING_TYPE)
 
             new_version = int(time())
-            new_version_with_time_factor = float(new_version / TIME_FACTOR)
+            new_version_with_time_factor = float(new_version / self.__time_factor)
             new_version_bytes = struct.pack('d', new_version_with_time_factor)
 
             try:

@@ -11,8 +11,6 @@ class HandlesJsonCache:
         self.__connected = False
         self.__socket_port = -1
 
-        # self.__make_new_connection()
-
     def __make_new_connection(self) -> int:
         """"
         Return Messages:
