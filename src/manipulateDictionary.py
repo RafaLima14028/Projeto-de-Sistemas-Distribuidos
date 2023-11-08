@@ -111,6 +111,15 @@ class ManipulateDictionary:
 
     def getRangeByKeyVersion(self, start_key: str, end_key: str, start_version: float = -1,
                              end_version: float = -1) -> dict:
+        if len(self.__dictionary) == 0:
+            new_dict = self.__handlesJson.GetRange(start_key, end_key, start_version, end_version)
+
+            for k, v in new_dict.items():
+                if v:
+                    self.__updateCache(k, v[1], v[0])
+
+            return new_dict
+
         values_in_range = dict()
         need_refresh = False
 
@@ -127,24 +136,25 @@ class ManipulateDictionary:
                         for version, value in values:
                             if version <= max_requested_version:
                                 if key in values_in_range:
-                                    values_in_range[key].append(((version, value), int(time())))
+                                    values_in_range[key].append((version, value))
                                 else:
-                                    values_in_range[key] = [(version, value)]
+                                    values_in_range[key] = (version, value)
         else:
             for k in list(self.__dictionary.keys()):
                 if start_key <= k <= end_key:
                     _, value_returned, version_returned = self.getByKeyVersion(k)
 
                     if k in values_in_range:
-                        values_in_range[k].append(((version_returned, value_returned), int(time())))
+                        values_in_range[k].append((version_returned, value_returned))
                     else:
-                        values_in_range[k] = [((version_returned, value_returned), int(time()))]
+                        values_in_range[k] = (version_returned, value_returned)
 
         if need_refresh:
             new_dict = self.__handlesJson.GetRange(start_key, end_key, start_version, end_version)
 
-            for k, v in new_dict:
-                self.__updateCache(k, v[1], v[0])
+            for k, v in new_dict.items():
+                if v:
+                    self.__updateCache(k, v[1], v[0])
 
             return new_dict
         else:
@@ -174,11 +184,9 @@ class ManipulateDictionary:
         return key_cache_returned, value_cache_returned, verion_cache_returned
 
     def delRange(self, start_key: str, end_key: str) -> dict:
-        # keys_in_range = self.getRangeByKeyVersion(start_key, end_key)
+        data = self.__handlesJson.DelRange(start_key, end_key)
 
         for key in list(self.__dictionary.keys()):
             del self.__dictionary[key]
-
-        data = self.__handlesJson.DelRange(start_key, end_key)
 
         return data

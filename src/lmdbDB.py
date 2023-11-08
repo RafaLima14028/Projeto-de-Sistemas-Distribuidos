@@ -19,14 +19,16 @@ class Database(SyncObj):
             )
         )
 
-        self.__self_node = selfNode
+        self.__self_node_host = selfNode.split(':')[0]
+        self.__self_node_port = int(selfNode.split(':')[1])
+        self.__other_nodes = otherNodes
         self.__path_database = f'data_db/{path}/'
 
         self.__env = lmdb.open(
             path=self.__path_database,
             sync=True,
             writemap=True,
-            metasync=True,
+            # metasync=True,
             map_async=True,
             readonly=False,
             max_readers=3,
@@ -39,10 +41,13 @@ class Database(SyncObj):
         print(f'The nodes are synchronized: {self.isReady()}')
         print(f'The node {selfNode} has been successfully initialized...')
 
-    def get_port(self) -> int:
-        return int(self.__self_node.split(':')[1])
+    def get_host(self):
+        return self.__self_node_host
 
-    @replicated_sync
+    def get_port(self) -> int:
+        return self.__self_node_port
+
+    @replicated_sync(timeout=2)
     def put(self, key: str, value: str) -> (str, str, int, int):
         _, old_value, old_version = self.get(key)
 
@@ -86,7 +91,7 @@ class Database(SyncObj):
 
                     for version_bytes, value_bytes in existing_values:
                         version = struct.unpack('d', version_bytes)[0]
-                        values.append((value_bytes.decode(ENCODING_AND_DECODING_TYPE), int(version * 10000)))
+                        values.append((value_bytes.decode(ENCODING_AND_DECODING_TYPE), int(version * TIME_FACTOR)))
         except lmdb.Error as e:
             raise Exception(f'Failed to fetch data from the database: {str(e)}')
 
@@ -124,41 +129,26 @@ class Database(SyncObj):
         return max_tuple
 
     def getRange(self, start_key: str, end_key: str, start_version: int = -1, end_version: int = -1) -> dict:
-        values_in_range = dict()
+        result = {}
 
-        if start_version <= 0 or end_version <= 0:
-            try:
-                with self.__env.begin(write=False) as tnx:
-                    for key, values in tnx.cursor():
-                        key = key.decode(ENCODING_AND_DECODING_TYPE)
-                        _, value_returned, version_returned = self.get(key)
+        try:
+            with self.__env.begin(write=False) as txn:
+                cursor = txn.cursor()
 
-                        if key in values_in_range:
-                            values_in_range[key].append((version_returned, value_returned))
+                for key, _ in cursor:
+                    key_str = key.decode(ENCODING_AND_DECODING_TYPE)
+
+                    if start_key <= key_str <= end_key and key_str not in result:
+                        _, last_value, last_version = self.get(key_str, end_version)
+
+                        if last_version < start_version or last_value == '':
+                            result[key_str] = ()
                         else:
-                            values_in_range[key] = [(version_returned, value_returned)]
-            except lmdb.Error as e:
-                raise Exception(f'Database get in range failed: {str(e)}')
-        else:
-            max_request_version = max(start_version, end_version)
+                            result[key_str] = (last_version, last_value)
+        except lmdb.Error as e:
+            raise Exception(f'Failed to fetch data from the database: {str(e)}')
 
-            if start_version <= 0 or end_version <= 0:
-                try:
-                    with self.__env.begin(write=False) as tnx:
-                        for key, values in tnx.cursor():
-                            key = key.decode(ENCODING_AND_DECODING_TYPE)
-
-                            if start_key <= key <= end_key:
-                                for version, value in values:
-                                    if version <= max_request_version:
-                                        if key in values_in_range:
-                                            values_in_range[key].append((version, value))
-                                        else:
-                                            values_in_range[key] = [(version, value)]
-                except lmdb.Error as e:
-                    raise Exception(f'Database get in range failed: {str(e)}')
-
-        return values_in_range
+        return result
 
     @replicated_sync(timeout=2)
     def delete(self, key: str) -> (str, str, int):
@@ -178,27 +168,29 @@ class Database(SyncObj):
             return key, last_value, last_version
 
     @replicated_sync(timeout=2)
-    def delRange(self, start_key: str, end_key: str) -> dict[str, list[tuple[int, str]]]:
+    def delRange(self, start_key: str, end_key: str) -> dict:
         values_in_range = dict()
 
         try:
             with self.__env.begin(write=True) as txn:
                 cursor = txn.cursor()
 
-                for key, value in cursor.iter():
+                for key, _ in cursor:
                     key_str = key.decode(ENCODING_AND_DECODING_TYPE)
 
-                    if start_key <= key_str <= end_key:
+                    if start_key <= key_str <= end_key and key_str not in values_in_range:
                         _, last_value, last_version = self.get(key_str)
 
-                        if key_str in values_in_range:
-                            values_in_range[key_str].append((last_version, last_value))
-                        else:
-                            values_in_range[key_str] = [(last_version, last_value)]
-
-                        cursor.delete()
+                        values_in_range[key_str] = (last_version, last_value)
         except lmdb.Error as e:
             raise Exception(f'Database delete in range failed: {str(e)}')
+
+        for key in list(values_in_range.keys()):
+            try:
+                with self.__env.begin(write=True) as txn:
+                    txn.delete(key.encode(ENCODING_AND_DECODING_TYPE))
+            except lmdb.Error as e:
+                raise Exception(f'Database delete failed: {str(e)}')
 
         return values_in_range
 

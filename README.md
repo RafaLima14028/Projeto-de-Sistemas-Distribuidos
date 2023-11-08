@@ -30,12 +30,13 @@ para retornar ao cliente.
 - [x] Ajustar a reconexão do servidor com as réplicas.
 - [x] No servidor há algumas funções sem cache.
 - [ ] Problemas com Threads (processos) do SyncObj, conversando pela Thread (gera erro).
-- [ ] Ajustar funções do cache:
-  - [ ] DelRange e DelAll (está ficando travada).
+- [x] Ajustar funções do cache:
+  - [x] DelRange (está ficando travada).
+  - [x] DelAll (está ficando travada).
 - [x] replica.sh receber quais dbs devem ser levantados.
 - [ ] Implementar os novos testes.
 - [ ] Atualizar README.md com as instruções de compilação, inicialização e uso do controllerDatabase, servidor e cliente.
-- [ ] Definir argumentos para replica.sh / controllerDatabase.py.
+- [x] Definir argumentos para replica.sh / controllerDatabase.py.
 
 ### Métodos do cache implementados (*temporário*)
 

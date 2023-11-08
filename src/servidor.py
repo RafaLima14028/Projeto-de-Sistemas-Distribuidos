@@ -52,21 +52,18 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
             context.set_details('You entered some wrong value')
             raise grpc.RpcError
 
-        dict_range = self.__cache.getRangeByKeyVersion(
+        data = self.__cache.getRangeByKeyVersion(
             from_key, to_key,
             from_version, to_version
         )
 
         try:
             for key, values in data.items():
-                for version_value, value_value in values:
-                    response = interface_pb2.KeyValueVersionReply(
-                        key=key,
-                        val=value_value,
-                        ver=version_value
-                    )
-
-                    yield response
+                yield interface_pb2.KeyValueVersionReply(
+                    key=key,
+                    val=values[1],
+                    ver=values[0]
+                )
         except grpc.RpcError as e:
             context.set_code(e.code())
             context.set_details(str(e.details()))
@@ -217,14 +214,11 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key, values in data.items():
-                for version, value in values:
-                    response = interface_pb2.KeyValueVersionReply(
-                        key=key,
-                        val=value,
-                        ver=version
-                    )
-
-                    yield response
+                yield interface_pb2.KeyValueVersionReply(
+                    key=key,
+                    val=values[1],
+                    ver=values[0]
+                )
         except grpc.RpcError as e:
             context.set_code(e.code())
             context.set_details(str(e.details()))

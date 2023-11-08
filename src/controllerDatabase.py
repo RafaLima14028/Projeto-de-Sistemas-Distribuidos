@@ -113,7 +113,7 @@ def controller(replica: Database, conn: socket, addr: tuple) -> None:
         conn.send(resp.encode(ENCODING_AND_DECODING_TYPE))
 
 
-def init_bd(bd: str):
+def init_bd(bd: str) -> (Database, socket):
     match bd:
         case 'bd1':
             port = 44001
@@ -149,34 +149,86 @@ def run(db1: bool = False, db2: bool = False, db3: bool = False) -> None:
     if not db1 and not db2 and not db3:
         print(f'Error: no Database specified')
         return
+    elif db1 and not db2 and not db3:
+        port = 44001
+        bd_node = f'{SERVER_DB_ADDRESS}:{port}'
+        socket_port = SERVER_DB_SOCKET_PORT
 
-    replica_db1 = None
-    replica_db2 = None
-    replica_db3 = None
+        replica_db1 = Database(bd_node, [], 'bd1')
 
-    skt1 = None
-    skt2 = None
-    skt3 = None
+        skt1 = socket.socket()
+        skt1.bind((SERVER_DB_ADDRESS, socket_port))
+        skt1.listen(30)
+        print(f'Database socket initialized at: {(SERVER_DB_ADDRESS, socket_port)}')
+        sleep(2)
+        print('Ready...')
+        print()
 
-    # bd = None
-
-    if db1:
-        replica_db1, skt1 = init_bd('bd1')
-    if db2:
-        replica_db2, skt2 = init_bd('bd2')
-    if db3:
-        replica_db3, skt3 = init_bd('bd3')
-
-    while True:
-        if db1:
+        while True:
             conn, addr = skt1.accept()
-            threading.Thread(target=controller, args=(replica_db1, conn, addr)).start()
-        if db2:
+            threading.Thread(target=controller(replica_db1, conn, addr)).start()
+    elif not db1 and db2 and not db3:
+        port = 44002
+        bd_node = f'{SERVER_DB_ADDRESS}:{port}'
+        socket_port = SERVER_DB_SOCKET_PORT
+
+        replica_db2 = Database(bd_node, [], 'bd2')
+
+        skt2 = socket.socket()
+        skt2.bind((SERVER_DB_ADDRESS, socket_port))
+        skt2.listen(30)
+        print(f'Database socket initialized at: {(SERVER_DB_ADDRESS, socket_port)}')
+        sleep(2)
+        print('Ready...')
+        print()
+
+        while True:
             conn, addr = skt2.accept()
-            threading.Thread(target=controller, args=(replica_db2, conn, addr)).start()
-        if db3:
+            threading.Thread(target=controller(replica_db2, conn, addr)).start()
+    elif not db1 and not db2 and db3:
+        port = 44003
+        bd_node = f'{SERVER_DB_ADDRESS}:{port}'
+        socket_port = SERVER_DB_SOCKET_PORT
+
+        replica_db3 = Database(bd_node, [], 'bd3')
+
+        skt3 = socket.socket()
+        skt3.bind((SERVER_DB_ADDRESS, socket_port))
+        skt3.listen(30)
+        print(f'Database socket initialized at: {(SERVER_DB_ADDRESS, socket_port)}')
+        sleep(2)
+        print('Ready...')
+        print()
+
+        while True:
             conn, addr = skt3.accept()
-            threading.Thread(target=controller, args=(replica_db3, conn, addr)).start()
+            threading.Thread(target=controller(replica_db3, conn, addr)).start()
+    else:
+        replica_db1 = None
+        replica_db2 = None
+        replica_db3 = None
+
+        skt1 = None
+        skt2 = None
+        skt3 = None
+
+        if db1:
+            replica_db1, skt1 = init_bd('bd1')
+        if db2:
+            replica_db2, skt2 = init_bd('bd2')
+        if db3:
+            replica_db3, skt3 = init_bd('bd3')
+
+        while True:
+            if db1:
+                conn, addr = skt1.accept()
+                threading.Thread(target=controller, args=(replica_db1, conn, addr)).start()
+            if db2:
+                conn, addr = skt2.accept()
+                threading.Thread(target=controller, args=(replica_db2, conn, addr)).start()
+            if db3:
+                conn, addr = skt3.accept()
+                threading.Thread(target=controller, args=(replica_db3, conn, addr)).start()
 
 
 if __name__ == '__main__':
