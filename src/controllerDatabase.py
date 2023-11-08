@@ -223,12 +223,15 @@ def run(db1: bool = False, db2: bool = False, db3: bool = False) -> None:
             if db1:
                 conn, addr = skt1.accept()
                 threading.Thread(target=controller, args=(replica_db1, conn, addr)).start()
+                continue
             if db2:
                 conn, addr = skt2.accept()
                 threading.Thread(target=controller, args=(replica_db2, conn, addr)).start()
+                continue
             if db3:
                 conn, addr = skt3.accept()
                 threading.Thread(target=controller, args=(replica_db3, conn, addr)).start()
+                continue
 
 
 if __name__ == '__main__':
