@@ -5,6 +5,8 @@
 * Rafael Alves de Lima - 12021BCC035 ([@RafaLima14028](https://github.com/RafaLima14028/))
 * Mateus Rocha Resende - 11921BCC027 ([@matrocheetos](https://github.com/matrocheetos))
 
+---
+
 ### Métodos implementados
 
 - [x] Put
@@ -37,7 +39,7 @@ verificando qual vai ser o próximo a ser conectado (controllerDatabase.py linha
   - [x] DelAll (está ficando travada).
 - [x] replica.sh receber quais dbs devem ser levantados.
 - [ ] Implementar os novos testes.
-- [ ] Atualizar README.md com as instruções de compilação, inicialização e uso do controllerDatabase, servidor e cliente.
+- [x] Atualizar README.md com as instruções de compilação, inicialização e uso do controllerDatabase, servidor e cliente.
 - [x] Definir argumentos para replica.sh / controllerDatabase.py.
 
 ### Métodos do cache implementados (*temporário*)
@@ -82,6 +84,8 @@ verificando qual vai ser o próximo a ser conectado (controllerDatabase.py linha
 - [x] Três réplicas para o banco de dados
 - [x] Servidores são máquinas de estados determinística
 
+---
+
 ### Esquema de dados
 
 #### Cache:
@@ -125,26 +129,50 @@ o JSON do cache, é verificado qual função que requisitou para saber qual ser�
 banco de dados e as informações são retornadas ao cache por meio de um JSON que é enviado por um socket. Caso a réplica
 em uso do cache falhe, tenta-se conectar as outras, mas se não houver nenhum é gerada uma exceção.
 
+---
+
 ### Instalação e execução
 
-Primeiramente, clone o projeto para sua máquina local:
+Primeiramente, clone o projeto para sua máquina local e abra a pasta:
 
 ```bash
 git clone https://github.com/RafaLima14028/Projeto-de-Sistemas-Distribuidos.git
+cd Projeto-de-Sistemas-Distribuidos
 ```
 
-Instale as dependências necessárias e compile os arquivos gRPC:
+Crie o ambiente virtual, instale as dependências necessárias e compile os arquivos gRPC:
 
 ```bash
-cd Projeto-de-Sistemas-Distribuidos
 chmod +x compile.sh
 ./compile.sh
 ```
 
-__**OBS!**__: É necessário dar pelo menos 1 segundo entre o início das réplicas
+Inicialize as réplicas, devem ser usados os parâmetros bd1, bd2 e/ou bd3:
 
-### Link para o vídeo
+```bash
+./replica.sh -bd1 -bd2 -bd3
+```
+
+Inicialize o(s) servidor(es) especificando uma porta:
+
+```bash
+./server.sh 50051
+./server.sh 50052
+...
+```
+
+Inicialize o(s) cliente(s) com a porta correspondente ao servidor que se deseja conectar:
+
+```bash
+./client.sh 50051
+./client.sh 50052
+...
+```
+
+---
+
+### Link para os vídeos
 
 [Parte 1 do Projeto](https://youtu.be/9ZDFBH2iPKQ)
-<br/>
+
 [Parte 2 do Projeto]() **(Em breve)**
