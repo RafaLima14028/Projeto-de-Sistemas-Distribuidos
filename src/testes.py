@@ -1,10 +1,7 @@
-import os
 import threading
 from time import sleep
 
-from src import cliente, servidor, controllerDatabase
-
-os.chdir('src')
+import cliente, servidor, controllerDatabase
 
 
 def print_conteudo():
