@@ -1,10 +1,12 @@
 import threading
 from time import sleep
 
-import cliente, servidor, controllerDatabase
+import cliente
+import controllerDatabase
+import servidor
 
 
-def print_conteudo():
+def print_conteudo() -> None:
     sleep(3)
     print("\n==========================================\nConteúdo de todos os servidores:")
     print("==========================================\nServidor 50051")
@@ -69,6 +71,9 @@ cliente.get(50051, 'teste-99', 0)  # não vai encontrar, chave inexistente
 sleep(3)
 cliente.delete_all(50053, ['teste5', 'teste6', 'teste7'])
 sleep(3)
+print_conteudo()
+
+sleep(62)
 print_conteudo()
 
 print("Testes concluídos")

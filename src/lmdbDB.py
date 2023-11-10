@@ -144,7 +144,7 @@ class Database(SyncObj):
                         _, last_value, last_version = self.get(key_str, end_version)
 
                         if last_version < start_version or last_value == '':
-                            result[key_str] = ()
+                            continue
                         else:
                             result[key_str] = (last_version, last_value)
         except lmdb.Error as e:

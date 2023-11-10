@@ -59,11 +59,17 @@ class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):
 
         try:
             for key, values in data.items():
-                yield interface_pb2.KeyValueVersionReply(
-                    key=key,
-                    val=values[1],
-                    ver=values[0]
-                )
+                if values[0] <= 0:
+                    yield interface_pb2.KeyValueVersionReply(
+                        key='',
+                        val=''
+                    )
+                else:
+                    yield interface_pb2.KeyValueVersionReply(
+                        key=key,
+                        val=values[1],
+                        ver=values[0]
+                    )
         except grpc.RpcError as e:
             context.set_code(e.code())
             context.set_details(str(e.details()))

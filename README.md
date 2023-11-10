@@ -122,4 +122,4 @@ Inicialize o(s) cliente(s) com a porta correspondente ao servidor que se deseja 
 
 [Parte 1 do Projeto](https://youtu.be/9ZDFBH2iPKQ)
 
-[Parte 2 do Projeto]() **(Em breve)**
+[Parte 2 do Projeto]()
