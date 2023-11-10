@@ -1,5 +1,7 @@
 <h1 align="center">Projeto de Sistemas Distribuídos</h1>
 
+---
+
 ### Integrantes
 
 * Rafael Alves de Lima - 12021BCC035 ([@RafaLima14028](https://github.com/RafaLima14028/))
@@ -18,61 +20,6 @@
 - [x] PutAll
 - [x] GetAll
 - [x] DelAll
-
-### A fazer ainda (*temporário*)
-
-- [x] Permitir o cache trabalhar com outras replicas além da 1 (db1), a porta é a 40400 que é referente ao
-socket da replica 1. Isso está no handlesJSON.
-- [x] Remover a exceção gerada pelo handlesJSON, quando uma conexão é fechada inesperadamente no recv.
-- [x] Métodos do handlesJSON tentam refazer a conexão caso a réplica em uso falhe.
-- [x] Mudar a forma como o tempo é guardado, dividindo por 10.000 para guardar e multiplica por 10.000
-para retornar ao cliente.
-- [x] Tratar fechamento inesperado com o recv do cache.
-- [x] Verificar a replicação entre os bancos de dados.
-- [x] Ajustar a reconexão do servidor com as réplicas.
-- [x] No servidor há algumas funções sem cache.
-- [x] Problemas com Threads (processos) do SyncObj, conversando pela Thread (gera erro).
-- [x] Quando ensera o servidor, o controller espera conectar com o próximo db, deve ficar
-verificando qual vai ser o próximo a ser conectado (controllerDatabase.py linha 222 - no while True)
-- [x] Ajustar funções do cache:
-  - [x] DelRange (está ficando travada).
-  - [x] DelAll (está ficando travada).
-- [x] replica.sh receber quais dbs devem ser levantados.
-- [x] Implementar os novos testes.
-- [x] Atualizar README.md com as instruções de compilação, inicialização e uso do controllerDatabase, servidor e cliente.
-- [x] Definir argumentos para replica.sh / controllerDatabase.py.
-
-### Métodos do cache implementados (*temporário*)
-
-- [x] insertAndUpdate
-- [x] getByKeyVersion
-- [x] getRangeByKeyVersion
-- [x] trim
-- [x] delete
-- [x] delRange
-
-### Regras para atualizar o cache (*temporário*)
-
-- **Put**: Verificar se o cache está dentro de um tempo válido, senão atualiza do db.
-  Se o dado já existe, retorna do cache.
-- **Get**: Verifica se existe ou não no cache os dados.
-  Se os dados existem, verifica se está no tempo válido e retorna, senão atualiza o
-  cache e retorna.
-  Se os dados não existirem, verifica se está no tempo válido e retorna, senão
-  atualiza o cache e retorna.
-- **Del**: Busca a chave no cache usando a função Get e
-  executa a operação de excluir todas as chaves do cache e depois executa no
-  banco de dados também.
-- **Trim**: Busca a chave no cache usando a função Get e
-  executa a operação de excluir todas as chaves do cache,
-  guarda os últimos dados que haviam e depois executa no
-  banco de dados também.
-- **GetRange**: Verifica se existe ou não no cache os dados. Se os dados existirem, verifica
-  se está no tempo válido e retorna, senão atualiza o cache e retorna.
-  Se os dados não existirem, verifica se está no tempo válido e retorna, senão atualiza o cache e retorna.
-- **DelRange**: Busca a chave no cache usando a função Get e
-  executa a operação de excluir todas as chaves do cache e depois executa no
-  banco de dados também.
 
 ### Requisitos
 

@@ -2,9 +2,9 @@ import sys
 from concurrent import futures
 import grpc
 
-from src.proto import interface_pb2_grpc, interface_pb2
-from src.manipulateDictionary import ManipulateDictionary
-from src.utils import check_string
+import interface_pb2_grpc, interface_pb2
+from manipulateDictionary import ManipulateDictionary
+from utils import check_string
 
 
 class KeyValueStoreServicer(interface_pb2_grpc.KeyValueStoreServicer):

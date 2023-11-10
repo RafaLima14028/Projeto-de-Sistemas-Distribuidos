@@ -1,7 +1,7 @@
 import json
 import socket
 
-from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT
+from utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT
 
 
 class HandlesJsonCache:

@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from src.proto import interface_pb2 as src_dot_proto_dot_interface__pb2
+import interface_pb2 as interface__pb2
 
 
 class KeyValueStoreStub(object):
@@ -16,48 +16,48 @@ class KeyValueStoreStub(object):
         """
         self.Get = channel.unary_unary(
                 '/project.KeyValueStore/Get',
-                request_serializer=src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-                response_deserializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+                request_serializer=interface__pb2.KeyRequest.SerializeToString,
+                response_deserializer=interface__pb2.KeyValueVersionReply.FromString,
                 )
         self.GetRange = channel.unary_stream(
                 '/project.KeyValueStore/GetRange',
-                request_serializer=src_dot_proto_dot_interface__pb2.KeyRange.SerializeToString,
-                response_deserializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+                request_serializer=interface__pb2.KeyRange.SerializeToString,
+                response_deserializer=interface__pb2.KeyValueVersionReply.FromString,
                 )
         self.GetAll = channel.stream_stream(
                 '/project.KeyValueStore/GetAll',
-                request_serializer=src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-                response_deserializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+                request_serializer=interface__pb2.KeyRequest.SerializeToString,
+                response_deserializer=interface__pb2.KeyValueVersionReply.FromString,
                 )
         self.Put = channel.unary_unary(
                 '/project.KeyValueStore/Put',
-                request_serializer=src_dot_proto_dot_interface__pb2.KeyValueRequest.SerializeToString,
-                response_deserializer=src_dot_proto_dot_interface__pb2.PutReply.FromString,
+                request_serializer=interface__pb2.KeyValueRequest.SerializeToString,
+                response_deserializer=interface__pb2.PutReply.FromString,
                 )
         self.PutAll = channel.stream_stream(
                 '/project.KeyValueStore/PutAll',
-                request_serializer=src_dot_proto_dot_interface__pb2.KeyValueRequest.SerializeToString,
-                response_deserializer=src_dot_proto_dot_interface__pb2.PutReply.FromString,
+                request_serializer=interface__pb2.KeyValueRequest.SerializeToString,
+                response_deserializer=interface__pb2.PutReply.FromString,
                 )
         self.Del = channel.unary_unary(
                 '/project.KeyValueStore/Del',
-                request_serializer=src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-                response_deserializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+                request_serializer=interface__pb2.KeyRequest.SerializeToString,
+                response_deserializer=interface__pb2.KeyValueVersionReply.FromString,
                 )
         self.DelRange = channel.unary_stream(
                 '/project.KeyValueStore/DelRange',
-                request_serializer=src_dot_proto_dot_interface__pb2.KeyRange.SerializeToString,
-                response_deserializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+                request_serializer=interface__pb2.KeyRange.SerializeToString,
+                response_deserializer=interface__pb2.KeyValueVersionReply.FromString,
                 )
         self.DelAll = channel.stream_stream(
                 '/project.KeyValueStore/DelAll',
-                request_serializer=src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-                response_deserializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+                request_serializer=interface__pb2.KeyRequest.SerializeToString,
+                response_deserializer=interface__pb2.KeyValueVersionReply.FromString,
                 )
         self.Trim = channel.unary_unary(
                 '/project.KeyValueStore/Trim',
-                request_serializer=src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-                response_deserializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+                request_serializer=interface__pb2.KeyRequest.SerializeToString,
+                response_deserializer=interface__pb2.KeyValueVersionReply.FromString,
                 )
 
 
@@ -123,48 +123,48 @@ def add_KeyValueStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Get': grpc.unary_unary_rpc_method_handler(
                     servicer.Get,
-                    request_deserializer=src_dot_proto_dot_interface__pb2.KeyRequest.FromString,
-                    response_serializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.SerializeToString,
+                    request_deserializer=interface__pb2.KeyRequest.FromString,
+                    response_serializer=interface__pb2.KeyValueVersionReply.SerializeToString,
             ),
             'GetRange': grpc.unary_stream_rpc_method_handler(
                     servicer.GetRange,
-                    request_deserializer=src_dot_proto_dot_interface__pb2.KeyRange.FromString,
-                    response_serializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.SerializeToString,
+                    request_deserializer=interface__pb2.KeyRange.FromString,
+                    response_serializer=interface__pb2.KeyValueVersionReply.SerializeToString,
             ),
             'GetAll': grpc.stream_stream_rpc_method_handler(
                     servicer.GetAll,
-                    request_deserializer=src_dot_proto_dot_interface__pb2.KeyRequest.FromString,
-                    response_serializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.SerializeToString,
+                    request_deserializer=interface__pb2.KeyRequest.FromString,
+                    response_serializer=interface__pb2.KeyValueVersionReply.SerializeToString,
             ),
             'Put': grpc.unary_unary_rpc_method_handler(
                     servicer.Put,
-                    request_deserializer=src_dot_proto_dot_interface__pb2.KeyValueRequest.FromString,
-                    response_serializer=src_dot_proto_dot_interface__pb2.PutReply.SerializeToString,
+                    request_deserializer=interface__pb2.KeyValueRequest.FromString,
+                    response_serializer=interface__pb2.PutReply.SerializeToString,
             ),
             'PutAll': grpc.stream_stream_rpc_method_handler(
                     servicer.PutAll,
-                    request_deserializer=src_dot_proto_dot_interface__pb2.KeyValueRequest.FromString,
-                    response_serializer=src_dot_proto_dot_interface__pb2.PutReply.SerializeToString,
+                    request_deserializer=interface__pb2.KeyValueRequest.FromString,
+                    response_serializer=interface__pb2.PutReply.SerializeToString,
             ),
             'Del': grpc.unary_unary_rpc_method_handler(
                     servicer.Del,
-                    request_deserializer=src_dot_proto_dot_interface__pb2.KeyRequest.FromString,
-                    response_serializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.SerializeToString,
+                    request_deserializer=interface__pb2.KeyRequest.FromString,
+                    response_serializer=interface__pb2.KeyValueVersionReply.SerializeToString,
             ),
             'DelRange': grpc.unary_stream_rpc_method_handler(
                     servicer.DelRange,
-                    request_deserializer=src_dot_proto_dot_interface__pb2.KeyRange.FromString,
-                    response_serializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.SerializeToString,
+                    request_deserializer=interface__pb2.KeyRange.FromString,
+                    response_serializer=interface__pb2.KeyValueVersionReply.SerializeToString,
             ),
             'DelAll': grpc.stream_stream_rpc_method_handler(
                     servicer.DelAll,
-                    request_deserializer=src_dot_proto_dot_interface__pb2.KeyRequest.FromString,
-                    response_serializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.SerializeToString,
+                    request_deserializer=interface__pb2.KeyRequest.FromString,
+                    response_serializer=interface__pb2.KeyValueVersionReply.SerializeToString,
             ),
             'Trim': grpc.unary_unary_rpc_method_handler(
                     servicer.Trim,
-                    request_deserializer=src_dot_proto_dot_interface__pb2.KeyRequest.FromString,
-                    response_serializer=src_dot_proto_dot_interface__pb2.KeyValueVersionReply.SerializeToString,
+                    request_deserializer=interface__pb2.KeyRequest.FromString,
+                    response_serializer=interface__pb2.KeyValueVersionReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -188,8 +188,8 @@ class KeyValueStore(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/project.KeyValueStore/Get',
-            src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-            src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+            interface__pb2.KeyRequest.SerializeToString,
+            interface__pb2.KeyValueVersionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -205,8 +205,8 @@ class KeyValueStore(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/project.KeyValueStore/GetRange',
-            src_dot_proto_dot_interface__pb2.KeyRange.SerializeToString,
-            src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+            interface__pb2.KeyRange.SerializeToString,
+            interface__pb2.KeyValueVersionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -222,8 +222,8 @@ class KeyValueStore(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.stream_stream(request_iterator, target, '/project.KeyValueStore/GetAll',
-            src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-            src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+            interface__pb2.KeyRequest.SerializeToString,
+            interface__pb2.KeyValueVersionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -239,8 +239,8 @@ class KeyValueStore(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/project.KeyValueStore/Put',
-            src_dot_proto_dot_interface__pb2.KeyValueRequest.SerializeToString,
-            src_dot_proto_dot_interface__pb2.PutReply.FromString,
+            interface__pb2.KeyValueRequest.SerializeToString,
+            interface__pb2.PutReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -256,8 +256,8 @@ class KeyValueStore(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.stream_stream(request_iterator, target, '/project.KeyValueStore/PutAll',
-            src_dot_proto_dot_interface__pb2.KeyValueRequest.SerializeToString,
-            src_dot_proto_dot_interface__pb2.PutReply.FromString,
+            interface__pb2.KeyValueRequest.SerializeToString,
+            interface__pb2.PutReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -273,8 +273,8 @@ class KeyValueStore(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/project.KeyValueStore/Del',
-            src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-            src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+            interface__pb2.KeyRequest.SerializeToString,
+            interface__pb2.KeyValueVersionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -290,8 +290,8 @@ class KeyValueStore(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/project.KeyValueStore/DelRange',
-            src_dot_proto_dot_interface__pb2.KeyRange.SerializeToString,
-            src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+            interface__pb2.KeyRange.SerializeToString,
+            interface__pb2.KeyValueVersionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -307,8 +307,8 @@ class KeyValueStore(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.stream_stream(request_iterator, target, '/project.KeyValueStore/DelAll',
-            src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-            src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+            interface__pb2.KeyRequest.SerializeToString,
+            interface__pb2.KeyValueVersionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -324,7 +324,7 @@ class KeyValueStore(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/project.KeyValueStore/Trim',
-            src_dot_proto_dot_interface__pb2.KeyRequest.SerializeToString,
-            src_dot_proto_dot_interface__pb2.KeyValueVersionReply.FromString,
+            interface__pb2.KeyRequest.SerializeToString,
+            interface__pb2.KeyValueVersionReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

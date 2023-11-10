@@ -4,8 +4,8 @@ import threading
 import json
 from time import sleep
 
-from src.lmdbDB import Database
-from src.utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT
+from lmdbDB import Database
+from utils import ENCODING_AND_DECODING_TYPE, SERVER_DB_ADDRESS, SERVER_DB_SOCKET_PORT
 
 
 def controller(replica: Database, conn: socket, addr: tuple) -> None:

@@ -4,7 +4,7 @@ import struct
 import pickle
 from time import time, sleep
 
-from src.utils import ENCODING_AND_DECODING_TYPE
+from utils import ENCODING_AND_DECODING_TYPE
 
 
 class Database(SyncObj):

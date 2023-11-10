@@ -1,8 +1,8 @@
 import sys
 import grpc
 
-from src.proto import interface_pb2_grpc, interface_pb2
-from src.utils import check_number
+import interface_pb2_grpc, interface_pb2
+from utils import check_number
 
 
 def put(port: int, key: str, value: str) -> None:
